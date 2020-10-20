@@ -104,6 +104,7 @@ Pada toolkit ini, tersedia tiga activation function yang dapat digunakan dalam p
 
 ## Optimizer
 Berikut optimizer algorithm yang tersedia juga. Cuma satu sih :(  
+
 1. SGD : *optimizer.SGD. Dengan properties sebagai berikut :
     - ``Alpha`` (learning rates) : float64
     - ``M`` (momentum) : float64
@@ -113,6 +114,7 @@ Berikut optimizer algorithm yang tersedia juga. Cuma satu sih :(
 
 ## Loss
 Sedangkan berikut loss function yang tersedia. Cuma satu juga :(( 
+
 1.RMSE : *loss.RMSE
 
 
