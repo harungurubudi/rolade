@@ -9,9 +9,13 @@ import (
 )
 
 func main() {
-	nt := network.NewNetwork(4, 2)
-	nt.AddHiddenLayer(4)
-	nt.AddHiddenLayer(3)
+	nt, err := network.NewNetwork(4, 2, "tanh")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	nt.AddLayer(4, "tanh")
+	nt.AddLayer(3, "tanh")
 
 	nt.SetProps(network.Props{
 		Optimizer: &optimizer.SGD{
@@ -22,7 +26,7 @@ func main() {
 	})
 
 	features, targets := getTrainingData()
-	err := nt.Train(features, targets)
+	err = nt.Train(features, targets)
 	if err != nil {
 		log.Fatal(err)
 	}
