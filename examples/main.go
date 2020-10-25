@@ -9,13 +9,20 @@ import (
 )
 
 func main() {
-	nt, err := network.NewNetwork(4, 2, "tanh")
+	nt, err := network.NewNetwork(4, 2, "relu")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	nt.AddLayer(4, "tanh")
-	nt.AddLayer(3, "tanh")
+	err = nt.AddLayer(4, "sigmoid")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	err = nt.AddLayer(3, "tanh")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	nt.SetProps(network.Props{
 		Optimizer: &optimizer.SGD{
