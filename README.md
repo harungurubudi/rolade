@@ -18,17 +18,17 @@ Untuk memulai, pertama import dulu networknya.
 import "github.com/harungurubudi/rolade/network"
 ```
 
-Kemudian definisikan struktur network yang anda inginkan. Misal, menginginkan network dengan feature berukuran ``4`` dan target berukuran ``2`` :
+Kemudian definisikan struktur network yang anda inginkan. Misal, menginginkan network dengan feature berukuran ``4`` dan target berukuran ``2``, dengan inisiasi fungsi aktivasi ``relu`` :
 
 ```
-nt := network.NewNetwork(4, 2)
+nt := network.NewNetwork(4, 2, "relu")
 ```
 
-Tentukan juga hidden layer yang diinginkan. Untuk menambahkan hidden layer, bisa menggunakan method ``AddHiddenLayer`` pada object network. Misal, anda ingin menambahkan dua hidden layer dengan ukuran masing-masing ``4`` dan ``3`` : 
+Tentukan juga hidden layer yang diinginkan. Untuk menambahkan hidden layer, bisa menggunakan method ``AddHiddenLayer`` pada object network. Misal, anda ingin menambahkan dua hidden layer dengan ukuran masing-masing ``4`` dan ``3``, dengan masing-masing fungsi aktivasi ``sigmoid`` dan ``tanh`` : 
 
 ```
-nt.AddHiddenLayer(4)
-nt.AddHiddenLayer(3)
+nt.AddHiddenLayer(4, "sigmoid")
+nt.AddHiddenLayer(3, "tanh")
 ```
 
 
@@ -50,7 +50,6 @@ Berikut daftar properties yang tersedia :
 
 | Options       | Description                                       | Type                      | Default Value           |
 |---------------|---------------------------------------------------|---------------------------|-------------------------|
-| Activation    | Fungsi Aktivasi                                   | activation.IActivation    | *activation.Tanh        |
 | Optimizer     | Algoritma Optimizer                               | optimizer.IOptimizer      | *optimizer.SGD          |
 | Loss          | Fungsi Loss                                       | loss.ILoss                | *loss.RMSE              |
 | ErrLimit      | Batas error yang perlu dicapai saat training      | float64                   | 0.001                   |

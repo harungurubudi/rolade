@@ -13,7 +13,6 @@ type DataArray []float64
 
 type (
 	Props struct {
-		Activation activation.IActivation `json:"activation"`
 		Loss       loss.ILoss `json:"loss"`
 		Optimizer  optimizer.IOptimizer `json:"optimizer"`
 		ErrLimit   float64 `json:"err_limit"`
@@ -25,6 +24,7 @@ type (
 		targetSize int `json:"target_size"`
 		weight [][]float64 `json:"weight"`
 		bias []float64 `json:"bias"`
+		activation activation.IActivation
 	}
 	
 	Network struct {
@@ -42,43 +42,28 @@ type (
 	deltas []deltaSet
 )
 
-func NewNetwork(inputSize int, outputSize int) (nt *Network) {
-	var w []weightset
-	w = append(w, generateWeight(inputSize, outputSize))
-	
-	nt = &Network{
-		inputSize: inputSize,
-		outputSize: outputSize,
-		props: Props{
-			Activation: &activation.Tanh{},
-			Loss:       &loss.RMSE{},
-			Optimizer:  optimizer.NewSGD(),
-			ErrLimit:  	0.001,
-			MaxEpoch: 	1000,
-		},
-		weights: w,
-	}
-	
-	return nt
-}
-
-// AddHiddenLayer - Add single hidden layer
-func (nt *Network) AddHiddenLayer(size int) error {
+// AddLayer - Add single hidden layer
+func (nt *Network) AddLayer(size int, activation string) error {
 	wLen := len(nt.weights)
 	if wLen > 0 {
 		lastWeight := nt.weights[wLen - 1]
-		nt.weights[wLen - 1] = generateWeight(lastWeight.sourceSize, size)
+		w, err := generateWeight(lastWeight.sourceSize, size, activation)
+		if err != nil {
+			return fmt.Errorf("Got error while add layer: %v", err)
+		}
+		nt.weights[wLen - 1] = w
 	}
 
-	nt.weights = append(nt.weights, generateWeight(size, nt.outputSize))
+	w, err := generateWeight(size, nt.outputSize, activation)
+	if err != nil {
+		return fmt.Errorf("Got error while add layer: %v", err)
+	}
+	nt.weights = append(nt.weights, w)
 	return nil
 }
 
 // SetProps - Self defined
 func (nt *Network) SetProps(props Props) {
-	if props.Activation != nil {
-		nt.props.Activation = props.Activation
-	}
 	if props.Loss != nil {
 		nt.props.Loss = props.Loss
 	}
@@ -145,7 +130,7 @@ func (nt *Network) propagate(input DataArray, weightIndex int) (DataArray, error
 			sum += weight.weight[i][j] * input[i]
 		}
 		sum += weight.bias[j]
-		output[j] = nt.props.Activation.Activate(sum)
+		output[j] = weight.activation.Activate(sum)
 	}
 
 	return output, nil
@@ -199,10 +184,11 @@ func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean Da
 		// Count error : expected target - final output
 		tErr := make(DataArray, len(targets[i]))
 		grad := make(DataArray, len(targets[i]))
+
 		for j, n := range targets[i] {
 			y := outputs[len(outputs) - 1][j]
 			tErr[j] = n - y
-			grad[j] = tErr[j] * nt.props.Activation.Derivate(y)
+			grad[j] = tErr[j] * nt.weights[len(nt.weights) - 1].activation.Derivate(y)
 		}
 
 		d, err := nt.calculateDelta(grad, nodes)
@@ -224,7 +210,7 @@ func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean Da
 func (nt *Network) calculateDelta(grad DataArray, nodes []DataArray) (deltas, error) {
 	result := make([]deltaSet, len(nodes))
 	for i := len(nodes) - 1; i >= 0; i-- {
-		newGrad, d, err := nt.backPropagate(grad, nodes[i], nt.weights[i].weight)
+		newGrad, d, err := nt.backPropagate(grad, nodes[i], nt.weights[i])
 		if err != nil {
 			return nil, fmt.Errorf("Error calculating delta : %v", err)
 		}
@@ -235,7 +221,7 @@ func (nt *Network) calculateDelta(grad DataArray, nodes []DataArray) (deltas, er
 	return deltas(result), nil
 }
 
-func (nt *Network) backPropagate(grad DataArray, node DataArray, weight[][]float64) (DataArray, deltaSet, error) {
+func (nt *Network) backPropagate(grad DataArray, node DataArray, wset weightset) (DataArray, deltaSet, error) {
 	var wDelta [][]float64
 	newGrad := make(DataArray, len(node))
 
@@ -243,10 +229,10 @@ func (nt *Network) backPropagate(grad DataArray, node DataArray, weight[][]float
 		var tErrLocalSum float64
 		var wDeltaLocal []float64
 		for j := 0; j < len(grad); j++ {
-			tErrLocalSum += (grad[j] * weight[i][j])
+			tErrLocalSum += (grad[j] * wset.weight[i][j])
 			wDeltaLocal = append(wDeltaLocal, nt.props.Optimizer.CalculateDelta(node[i] * grad[j]))
 		} 
-		newGrad[i] = tErrLocalSum * nt.props.Activation.Derivate(node[i])
+		newGrad[i] = tErrLocalSum * wset.activation.Derivate(node[i])
 		wDelta = append(wDelta, wDeltaLocal)
 	}
 
