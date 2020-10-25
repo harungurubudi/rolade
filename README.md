@@ -4,7 +4,7 @@ Minimal Neural Network toolkit.
 
 ## Before you go too far
 
-Ini cuma project hore-hore saja. Tidak ada jaminan atas validitas dari metode-metode yang digunakan, atau adanya support maupun pengembangan lebih jauh. Ada baiknya untuk tidak menggunakan pada project yang serius. Semua kerugian yang ditimbulkan akibat menggunakan toolkit ini di luar tanggung jawab saya, keluarga saya maupun Pak Zamroni.
+Ini cuma project hore-hore saja. Tidak ada jaminan atas validitas dari metode-metode yang digunakan, atau adanya support maupun pengembangan lebih jauh. Ada baiknya untuk tidak menggunakan pada project yang serius. Semua kerugian yang ditimbulkan akibat menggunakan toolkit ini di luar tanggung jawab kami.
 
 ## Getting Started
 
