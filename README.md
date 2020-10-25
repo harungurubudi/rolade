@@ -8,7 +8,7 @@ Ini cuma project hore-hore saja. Tidak ada jaminan atas validitas dari metode-me
 
 ## Getting Started
 
-Berikut adalah langkah-langkah untuk menggunakan toolkit ini. Mungkin kurang lengkap, tapi ndak apa-apa. 
+Berikut adalah langkah-langkah untuk menggunakan toolkit ini. Mungkin kurang lengkap, tapi nanti bakal ditambahkan. 
 
 ### Defining Network
 
