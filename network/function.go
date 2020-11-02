@@ -3,10 +3,13 @@ package network
 import (
 	"fmt"
 	"math/rand"
+	"encoding/json"
+	"io/ioutil"
 
 	"github.com/harungurubudi/rolade/activation"
 	"github.com/harungurubudi/rolade/loss"
 	"github.com/harungurubudi/rolade/optimizer"
+	"github.com/harungurubudi/rolade/profile"
 )
 
 func NewNetwork(inputSize int, outputSize int, activation string) (nt *Network, err error) {
@@ -31,6 +34,21 @@ func NewNetwork(inputSize int, outputSize int, activation string) (nt *Network, 
 	}
 	
 	return nt, nil
+}
+
+func Load(path string) (nt *Network, err error) {
+	ntb, err := ioutil.ReadFile(path + "/rolade")
+    if err != nil {
+		return nil, fmt.Errorf("Got error while load model file: %v", err)
+	}
+
+	var res profile.Network
+	err = json.Unmarshal(ntb, &res)
+	if err != nil {
+		return nil, fmt.Errorf("Got error while unmarshalling model: %v", err)
+	}
+
+	return nil, nil
 }
 
 func generateWeight(sourceSize int, targetSize int, activation string) (w weightset, err error) {

@@ -19,3 +19,7 @@ func (s *Relu) Derivate(val float64) (result float64) {
 
 	return 0
 }
+
+func (l *Relu) CallMe() string {
+	return "relu"
+}

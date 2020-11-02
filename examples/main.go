@@ -9,12 +9,12 @@ import (
 )
 
 func main() {
-	nt, err := network.NewNetwork(4, 2, "relu")
+	nt, err := network.NewNetwork(4, 2, "sigmoid")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = nt.AddLayer(4, "sigmoid")
+	err = nt.AddLayer(4, "tanh")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,6 +34,16 @@ func main() {
 
 	features, targets := getTrainingData()
 	err = nt.Train(features, targets)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = nt.Save(".")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = network.Load(".")
 	if err != nil {
 		log.Fatal(err)
 	}

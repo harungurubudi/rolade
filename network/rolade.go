@@ -1,39 +1,44 @@
 package network
 
 import (
+	"os"
 	"log"
 	"fmt"
+	"encoding/json"
 	
 	"github.com/harungurubudi/rolade/activation"
 	"github.com/harungurubudi/rolade/loss"
 	"github.com/harungurubudi/rolade/optimizer"
+	"github.com/harungurubudi/rolade/profile"
 )
 
 type DataArray []float64
 
 type (
+	// Network
 	Props struct {
-		Loss       loss.ILoss `json:"loss"`
-		Optimizer  optimizer.IOptimizer `json:"optimizer"`
-		ErrLimit   float64 `json:"err_limit"`
-		MaxEpoch   int `json:"max_epoch"`
+		Loss       loss.ILoss
+		Optimizer  optimizer.IOptimizer
+		ErrLimit   float64
+		MaxEpoch   int
 	}
 
 	weightset struct {
-		sourceSize int `json:"source_size"`
-		targetSize int `json:"target_size"`
-		weight [][]float64 `json:"weight"`
-		bias []float64 `json:"bias"`
+		sourceSize int
+		targetSize int
+		weight [][]float64
+		bias []float64
 		activation activation.IActivation
 	}
 	
 	Network struct {
-		inputSize int `json:"input_size"`
-		outputSize int `json:"output_size"`
-		props Props `json:"props"`
-		weights []weightset  `json:"weights"`
+		inputSize int
+		outputSize int
+		props Props
+		weights []weightset 
 	}
 
+	// Deltas
 	deltaSet struct {
 		weight [][]float64
 		bias []float64
@@ -42,12 +47,77 @@ type (
 	deltas []deltaSet
 )
 
+func (nt *Network) Save(path string) (err error) {
+	var w []profile.Weightset
+	for _, wit := range nt.weights {
+		ajs, err := json.Marshal(wit.activation) 
+		if err != nil {
+			return fmt.Errorf("Got error while marshalling activation: %v", err)
+		}
+		w = append(w, profile.Weightset{
+			SourceSize: wit.sourceSize,
+			TargetSize: wit.targetSize,
+			Weight: wit.weight,
+			Bias: wit.bias,
+			Activation: profile.Attr{
+				Name: wit.activation.CallMe(),
+				Props: string(ajs),
+			},
+		})
+	}
+
+	ljs, err := json.Marshal(nt.props.Loss) 
+	if err != nil {
+		return fmt.Errorf("Got error while marshalling loss: %v", err)
+	}
+
+	ojs, err := json.Marshal(nt.props.Optimizer) 
+	if err != nil {
+		return fmt.Errorf("Got error while marshalling optimizer: %v", err)
+	}
+
+	r := profile.Network{
+		InputSize: nt.inputSize,
+		OutputSize: nt.outputSize,
+		Weights: w,
+		Props: profile.Props{
+			Loss: profile.Attr{
+				Name: nt.props.Loss.CallMe(),
+				Props: string(ljs),
+			},
+			Optimizer: profile.Attr{
+				Name: nt.props.Optimizer.CallMe(),
+				Props: string(ojs),
+			},
+			ErrLimit: nt.props.ErrLimit,
+			MaxEpoch: nt.props.MaxEpoch,
+		},
+	}
+
+	b, err := json.Marshal(r)
+	if err != nil {
+		return fmt.Errorf("Got error while marshalling model: %v", err)
+	}
+
+	f, err := os.Create(path + "/rolade")
+	if err != nil {
+		return fmt.Errorf("Got error while creating model file: %v", err)
+	}
+	defer f.Close()
+
+	_, err = f.Write(b)
+	if err != nil {
+		return fmt.Errorf("Got error while writing model to file: %v", err)
+	}
+	return nil
+}
+
 // AddLayer - Add single hidden layer
 func (nt *Network) AddLayer(size int, activation string) error {
 	wLen := len(nt.weights)
 	if wLen > 0 {
 		lastWeight := nt.weights[wLen - 1]
-		w, err := generateWeight(lastWeight.sourceSize, size, activation)
+		w, err := generateWeight(lastWeight.sourceSize, size, lastWeight.activation.CallMe())
 		if err != nil {
 			return fmt.Errorf("Got error while add layer: %v", err)
 		}

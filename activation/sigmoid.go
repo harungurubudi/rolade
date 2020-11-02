@@ -13,3 +13,7 @@ func (s *Sigmoid) Activate(val float64) (result float64) {
 func (s *Sigmoid) Derivate(val float64) (result float64) {
 	return val * (1 - val)
 }
+
+func (l *Sigmoid) CallMe() string {
+	return "sigmoid"
+}

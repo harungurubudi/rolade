@@ -18,5 +18,5 @@ func (l *RMSE) Calculate(errs []float64) (result float64) {
 }
 
 func (l *RMSE) CallMe() string {
-	return "RMSE"
+	return "rmse"
 }
