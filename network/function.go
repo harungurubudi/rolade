@@ -37,7 +37,7 @@ func NewNetwork(inputSize int, outputSize int, activation activation.IActivation
 }
 
 func Load(path string) (nt *Network, err error) {
-	ntb, err := ioutil.ReadFile(path + "/rolade")
+	ntb, err := ioutil.ReadFile(path + "/rolade.profile")
     if err != nil {
 		return nil, fmt.Errorf("Got error while load model file: %v", err)
 	}
