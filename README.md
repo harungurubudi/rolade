@@ -21,14 +21,14 @@ import "github.com/harungurubudi/rolade/network"
 Kemudian definisikan struktur network yang anda inginkan. Misal, menginginkan network dengan feature berukuran ``4`` dan target berukuran ``2``, dengan inisiasi fungsi aktivasi ``relu`` :
 
 ```
-nt := network.NewNetwork(4, 2, "relu")
+nt := network.NewNetwork(4, 2, &activation.Relu{})
 ```
 
 Tentukan juga hidden layer yang diinginkan. Untuk menambahkan hidden layer, bisa menggunakan method ``AddHiddenLayer`` pada object network. Misal, anda ingin menambahkan dua hidden layer dengan ukuran masing-masing ``4`` dan ``3``, dengan masing-masing fungsi aktivasi ``sigmoid`` dan ``tanh`` : 
 
 ```
-nt.AddHiddenLayer(4, "sigmoid")
-nt.AddHiddenLayer(3, "tanh")
+nt.AddHiddenLayer(4, &activation.Tanh{})
+nt.AddHiddenLayer(3, &activation.Tanh{})
 ```
 
 
