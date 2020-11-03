@@ -99,7 +99,7 @@ func (nt *Network) Save(path string) (err error) {
 		return fmt.Errorf("Got error while marshalling model: %v", err)
 	}
 
-	f, err := os.Create(path + "/rolade")
+	f, err := os.Create(path + "/rolade.profile")
 	if err != nil {
 		return fmt.Errorf("Got error while creating model file: %v", err)
 	}
