@@ -6,20 +6,21 @@ import (
 
 	"github.com/harungurubudi/rolade/network"
 	"github.com/harungurubudi/rolade/optimizer"
+	"github.com/harungurubudi/rolade/activation"
 )
 
 func main() {
-	nt, err := network.NewNetwork(4, 2, "relu")
+	nt, err := network.NewNetwork(4, 2, &activation.Sigmoid{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = nt.AddLayer(4, "sigmoid")
+	err = nt.AddLayer(4, &activation.Tanh{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	
-	err = nt.AddLayer(3, "tanh")
+	err = nt.AddLayer(3, &activation.Tanh{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,11 +38,21 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = nt.Save(".")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	model, err := network.Load(".")
+	if err != nil {
+		log.Fatal(err)
+	}
 	
-	test(nt, network.DataArray{0, 0, 0, 1}) // 0, 0
-	test(nt, network.DataArray{0, 1, 1, 1}) // 1, 0
-	test(nt, network.DataArray{1, 1, 0, 1}) // 0, 1
-	test(nt, network.DataArray{1, 0, 1, 1}) // 0, 0
+	test(model, network.DataArray{0, 0, 0, 1}) // 0, 0
+	test(model, network.DataArray{0, 1, 1, 1}) // 1, 0
+	test(model, network.DataArray{1, 1, 0, 1}) // 0, 1
+	test(model, network.DataArray{1, 0, 1, 1}) // 0, 0
 }
 
 func test(nt *network.Network, input network.DataArray) {

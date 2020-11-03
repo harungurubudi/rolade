@@ -3,13 +3,16 @@ package network
 import (
 	"fmt"
 	"math/rand"
+	"encoding/json"
+	"io/ioutil"
 
 	"github.com/harungurubudi/rolade/activation"
 	"github.com/harungurubudi/rolade/loss"
 	"github.com/harungurubudi/rolade/optimizer"
+	"github.com/harungurubudi/rolade/profile"
 )
 
-func NewNetwork(inputSize int, outputSize int, activation string) (nt *Network, err error) {
+func NewNetwork(inputSize int, outputSize int, activation activation.IActivation) (nt *Network, err error) {
 	var initW []weightset
 	w, err := generateWeight(inputSize, outputSize, activation)
 	if err != nil {
@@ -33,7 +36,58 @@ func NewNetwork(inputSize int, outputSize int, activation string) (nt *Network, 
 	return nt, nil
 }
 
-func generateWeight(sourceSize int, targetSize int, activation string) (w weightset, err error) {
+func Load(path string) (nt *Network, err error) {
+	ntb, err := ioutil.ReadFile(path + "/rolade")
+    if err != nil {
+		return nil, fmt.Errorf("Got error while load model file: %v", err)
+	}
+
+	var pr profile.Network
+	err = json.Unmarshal(ntb, &pr)
+	if err != nil {
+		return nil, fmt.Errorf("Got error while unmarshalling model: %v", err)
+	}
+
+	var w []weightset
+	for _, wit := range pr.Weights {
+		a, err := activation.Generate(&wit.Activation)
+		if err != nil {
+			return nil, fmt.Errorf("Got error while load model: %v", err)
+		}
+
+		w = append(w, weightset{
+			sourceSize: wit.SourceSize,
+			targetSize: wit.TargetSize,
+			weight: wit.Weight,
+			bias: wit.Bias,
+			activation: a, 
+		})
+	}
+
+	l, err := loss.Generate(&pr.Props.Loss)
+	if err != nil {
+		return nil, fmt.Errorf("Got error while load model: %v", err)
+	}
+
+	o, err := optimizer.Generate(&pr.Props.Optimizer)
+	if err != nil {
+		return nil, fmt.Errorf("Got error while load model: %v", err)
+	}
+
+	return &Network{
+		inputSize: pr.InputSize,
+		outputSize: pr.OutputSize,
+		props: Props{
+			Loss: l,
+			Optimizer: o, 
+			ErrLimit: pr.Props.ErrLimit,
+			MaxEpoch: pr.Props.MaxEpoch,
+		},
+		weights: w,
+	}, nil
+}
+
+func generateWeight(sourceSize int, targetSize int, activation activation.IActivation) (w weightset, err error) {
 	var weight [][]float64 
 	for i := 0; i < sourceSize; i++ {
 		var tmp []float64
@@ -47,18 +101,13 @@ func generateWeight(sourceSize int, targetSize int, activation string) (w weight
 	for j := 0; j < targetSize; j++ {
 		bias = append(bias, getRandomFloat(-0.5, 0.5))
 	}
-
-	activationFunction, err := getActivationFunction(activation)
-	if err != nil {
-		return w, fmt.Errorf("Got error while generating weight: %v", err)
-	}
 	
 	result := weightset{
 		sourceSize: sourceSize,
 		targetSize: targetSize,
 		weight: weight,
 		bias: bias,
-		activation: activationFunction,
+		activation: activation,
 	}
 	return result, nil
 } 
@@ -78,17 +127,4 @@ func mean(vals DataArray) (result float64, err error) {
 	}
 
 	return sum / float64(len(vals)), nil
-}
-
-func getActivationFunction(name string) (result activation.IActivation, err error) {
-	switch name {
-	case "sigmoid":
-		return &activation.Sigmoid{}, err
-	case "tanh":
-		return &activation.Tanh{}, err
-	case "relu":
-		return &activation.Relu{}, err
-	default:
-		return result, fmt.Errorf("Invalid activation function name \"%s\"", name)
-	}
 }

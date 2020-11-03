@@ -34,3 +34,7 @@ func (o *SGD) initialize() {
 		o.Alpha = float64(0.001)
 	}
 }
+
+func (o *SGD) CallMe() string {
+	return "sgd"
+}
