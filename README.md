@@ -122,5 +122,5 @@ Sedangkan berikut loss function yang tersedia. Cuma satu juga :((
 Contoh sederhana bisa dilihat di directory example.
 
 ## To Do 
-1. Save and load model
+1. More network attribute
 2. Batch paralel training
