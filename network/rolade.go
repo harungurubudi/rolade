@@ -113,11 +113,11 @@ func (nt *Network) Save(path string) (err error) {
 }
 
 // AddLayer - Add single hidden layer
-func (nt *Network) AddLayer(size int, activation string) error {
+func (nt *Network) AddLayer(size int, activation activation.IActivation) error {
 	wLen := len(nt.weights)
 	if wLen > 0 {
 		lastWeight := nt.weights[wLen - 1]
-		w, err := generateWeight(lastWeight.sourceSize, size, lastWeight.activation.CallMe())
+		w, err := generateWeight(lastWeight.sourceSize, size, lastWeight.activation)
 		if err != nil {
 			return fmt.Errorf("Got error while add layer: %v", err)
 		}
