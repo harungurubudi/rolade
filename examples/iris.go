@@ -12,6 +12,7 @@ import (
 	"github.com/harungurubudi/rolade/network"
 	"github.com/harungurubudi/rolade/optimizer"
 	"github.com/harungurubudi/rolade/activation"
+	"github.com/harungurubudi/rolade/preprocessor"
 )
 
 func main() {
@@ -122,12 +123,11 @@ func compareLabel(input, target []int) (result bool) {
 
 func getData(filepath string) (features []network.DataArray, targets []network.DataArray, err error) {
 	dataset, err := ioutil.ReadFile(filepath)
-    if err != nil {
+	if err != nil {
 		return features, targets, fmt.Errorf("Got error while loading dataset: %v", err)
 	}
 
-	pfs := make([]network.DataArray, 4)
-
+	var featureData []network.DataArray 
 	r := csv.NewReader(strings.NewReader(string(dataset)))
 	for {
 		item, err := r.Read()
@@ -138,11 +138,14 @@ func getData(filepath string) (features []network.DataArray, targets []network.D
 			return features, targets, err
 		}
 
-		for i := range pfs {
-			iFloat, err := strconv.ParseFloat(item[i], 64)
-			if err == nil {
-				pfs[i] = append(pfs[i], iFloat)
-			}
+		firstItem, err := strconv.ParseFloat(item[0], 64)
+		if err == nil {
+			featureData = append(featureData, network.DataArray{
+				firstItem,
+				getFloat(item[1]),
+				getFloat(item[2]),
+				getFloat(item[3]),
+			})
 		}
 
 		switch item[4]{
@@ -155,50 +158,19 @@ func getData(filepath string) (features []network.DataArray, targets []network.D
 		}
 	}
 
-	for i, item := range pfs {
-		pfs[i], err = normalize(item) 
-		if err != nil {
-			return features, targets, err
-		}
-	}
-
-	for i := range pfs[0] {
-		features = append(features, network.DataArray{
-			pfs[0][i],
-			pfs[1][i],
-			pfs[2][i],
-			pfs[3][i],
-		})
+	features, err = preprocessor.Normalize(featureData)
+	if err != nil {
+		return features, targets, fmt.Errorf("Got error while normalize features: %v", err)
 	}
 
 	return features, targets, err
 }
 
-func normalize(pf network.DataArray) (result network.DataArray, err error) {
-	var lowest, highest float64
-	for i, item := range pf {
-		if i == 0 {
-			lowest = item
-			highest = item
-		} else {
-			if (item < lowest) {
-				lowest = item
-			}
-
-			if (item > highest) {
-				highest = item
-			}
-		}
+func getFloat(input string) (result float64) {
+	result, err := strconv.ParseFloat(input, 64) 
+	if err != nil {
+		result = 0
 	}
 
-	divider := highest - lowest 
-	if divider == 0 {
-		return result, fmt.Errorf("Highest is 0, it will trigger division by zero")
-	}
-
-	for _, item := range pf {
-		result = append(result, (item - lowest) / divider)
-	}
-
-	return result, nil
+	return result
 }
