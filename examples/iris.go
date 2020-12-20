@@ -10,49 +10,49 @@ import (
 	"strconv"
 
 	"github.com/harungurubudi/rolade/network"
-	"github.com/harungurubudi/rolade/optimizer"
-	"github.com/harungurubudi/rolade/activation"
+	// "github.com/harungurubudi/rolade/optimizer"
+	// "github.com/harungurubudi/rolade/activation"
 	"github.com/harungurubudi/rolade/preprocessor"
 )
 
 func main() {
-	nt, err := network.NewNetwork(4, 2, &activation.Tanh{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	// nt, err := network.NewNetwork(4, 2, &activation.Tanh{})
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	err = nt.AddLayer(4, &activation.Tanh{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	// err = nt.AddLayer(4, &activation.Tanh{})
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 	
-	err = nt.AddLayer(3, &activation.Tanh{})
-	if err != nil {
-		log.Fatal(err)
-	}
+	// err = nt.AddLayer(3, &activation.Tanh{})
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	nt.SetProps(network.Props{
-		Optimizer: &optimizer.SGD{
-			Alpha: 0.001,
-		},
-		ErrLimit: 0.005,
-		MaxEpoch: 100000,
-	})
+	// nt.SetProps(network.Props{
+	// 	Optimizer: &optimizer.SGD{
+	// 		Alpha: 0.001,
+	// 	},
+	// 	ErrLimit: 0.005,
+	// 	MaxEpoch: 100000,
+	// })
 
-	features, targets, err := getData("./examples/dataset/IRIS_train.csv")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// features, targets, err := getData("./examples/dataset/IRIS_train.csv")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	err = nt.Train(features, targets)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// err = nt.Train(features, targets)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	err = nt.Save(".")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// err = nt.Save(".")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	// Ok, training is done. Test the model
 	testModel()
@@ -88,7 +88,7 @@ func testModel() {
 			res[1],
 		})
 
-		log.Printf("Expected %s, but got %s", expected, got)
+		log.Printf("%d. Expected %s, but got %s", (i + 1), expected, got)
 
 		if expected == got {
 			success++
