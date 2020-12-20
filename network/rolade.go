@@ -4,6 +4,7 @@ import (
 	"os"
 	"log"
 	"fmt"
+	"time"
 	"encoding/json"
 	
 	"github.com/harungurubudi/rolade/activation"
@@ -216,6 +217,7 @@ func (nt *Network) Train(inputs []DataArray, targets []DataArray) (error) {
 
 	checkPointBatch := nt.props.MaxEpoch / 20
 	var lastLoss float64
+	start := time.Now()
 	for epoch := 0; epoch < nt.props.MaxEpoch; epoch++ {
 		errMean, err := nt.trainSet(inputs, targets)
 		if err != nil {
@@ -234,7 +236,9 @@ func (nt *Network) Train(inputs []DataArray, targets []DataArray) (error) {
 			return nil
 		}
 	}
-	log.Printf("Training finished due maximum epoch (%d) has been reached at loss (%s) : %f\n", nt.props.MaxEpoch, nt.props.Loss.CallMe(), lastLoss)
+	end := time.Now()
+	duration := end.Sub(start)
+	log.Printf("Training finished in %s due maximum epoch (%d) has been reached at loss (%s) : %f\n", duration.String(), nt.props.MaxEpoch, nt.props.Loss.CallMe(), lastLoss)
 	return nil
 }
 
