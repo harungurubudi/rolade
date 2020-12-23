@@ -174,3 +174,19 @@ func getFloat(input string) (result float64) {
 
 	return result
 }
+
+func mergeWeight(a weight, b weight) weight {
+	for i := 0; i < len(b); i++ {
+		for j := 0; j < len(b[i].w); j++ {
+			for k := 0; k < len(b[i].w[j]); k++ {
+				a.w[j][k] = a.w[j][k] + b[i].w[j][k]
+			}
+		}
+
+		for j := 0; j < len(b[i].b); j++ {
+			a.b[j] = a.b[j] + b[i].b[j]
+		}
+	}
+	
+	return a
+}
