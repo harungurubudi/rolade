@@ -49,13 +49,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// err = nt.Save(".")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	err = nt.Save(".")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Ok, training is done. Test the model
-	// testModel(nt)
+	testModel(nt)
 }
 
 

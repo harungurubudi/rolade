@@ -12,12 +12,16 @@ type (
 		ErrLimit   float64 `json:"err_limit"`
 		MaxEpoch   int `json:"max_epoch"`
 	}
+
+	Weight struct {
+		W [][]float64 `json:"w"`
+		B []float64 `json:"b"`
+	}
 	
-	Weightset struct {
+	Synaptic struct {
 		SourceSize int `json:"source_size"`
 		TargetSize int `json:"target_size"`
-		Weight [][]float64 `json:"weight"`
-		Bias []float64 `json:"bias"`
+		Weight Weight `json:"weight"`
 		Activation Attr `json:"activation"`
 	}
 	
@@ -25,6 +29,6 @@ type (
 		InputSize int `json:"input_size"`
 		OutputSize int `json:"output_size"`
 		Props Props `json:"props"`
-		Weights []Weightset  `json:"weights"`
+		Synaptics []Synaptic  `json:"synaptics"`
 	}
 )

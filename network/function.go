@@ -13,13 +13,13 @@ import (
 )
 
 func NewNetwork(inputSize int, outputSize int, activation activation.IActivation) (nt *Network, err error) {
-	var initW []weightset
-	w, err := generateWeight(inputSize, outputSize, activation)
+	var synaptics []synaptic
+	sy, err := generateSynaptic(inputSize, outputSize, activation)
 	if err != nil {
 		return nt, fmt.Errorf("Got error while add layer: %v", err)
 	}
 
-	initW = append(initW, w)
+	synaptics = append(synaptics, sy)
 
 	nt = &Network{
 		inputSize: inputSize,
@@ -30,7 +30,7 @@ func NewNetwork(inputSize int, outputSize int, activation activation.IActivation
 			ErrLimit:  	0.001,
 			MaxEpoch: 	1000,
 		},
-		weights: initW,
+		synaptics: synaptics,
 	}
 	
 	return nt, nil
@@ -48,18 +48,20 @@ func Load(path string) (nt *Network, err error) {
 		return nil, fmt.Errorf("Got error while unmarshalling model: %v", err)
 	}
 
-	var w []weightset
-	for _, wit := range pr.Weights {
-		a, err := activation.Generate(&wit.Activation)
+	var syn []synaptic
+	for _, sySource := range pr.Synaptics {
+		a, err := activation.Generate(&sySource.Activation)
 		if err != nil {
 			return nil, fmt.Errorf("Got error while load model: %v", err)
 		}
 
-		w = append(w, weightset{
-			sourceSize: wit.SourceSize,
-			targetSize: wit.TargetSize,
-			weight: wit.Weight,
-			bias: wit.Bias,
+		syn = append(syn, synaptic{
+			sourceSize: sySource.SourceSize,
+			targetSize: sySource.TargetSize,
+			weight: weight{
+				w: sySource.Weight.W,
+				b: sySource.Weight.B,
+			},
 			activation: a, 
 		})
 	}
@@ -83,30 +85,32 @@ func Load(path string) (nt *Network, err error) {
 			ErrLimit: pr.Props.ErrLimit,
 			MaxEpoch: pr.Props.MaxEpoch,
 		},
-		weights: w,
+		synaptics: syn,
 	}, nil
 }
 
-func generateWeight(sourceSize int, targetSize int, activation activation.IActivation) (w weightset, err error) {
-	var weight [][]float64 
+func generateSynaptic(sourceSize int, targetSize int, activation activation.IActivation) (sy synaptic, err error) {
+	var w [][]float64 
 	for i := 0; i < sourceSize; i++ {
 		var tmp []float64
 		for j := 0; j < targetSize; j++ {
 			tmp = append(tmp, getRandomFloat(-0.5, 0.5))
 		}
-		weight = append(weight, tmp)
+		w = append(w, tmp)
 	}
 
-	var bias []float64
+	var b []float64
 	for j := 0; j < targetSize; j++ {
-		bias = append(bias, getRandomFloat(-0.5, 0.5))
+		b = append(b, getRandomFloat(-0.5, 0.5))
 	}
 	
-	result := weightset{
+	result := synaptic{
 		sourceSize: sourceSize,
 		targetSize: targetSize,
-		weight: weight,
-		bias: bias,
+		weight: weight{
+			w: w,
+			b: b,
+		},
 		activation: activation,
 	}
 	return result, nil
