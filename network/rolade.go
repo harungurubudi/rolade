@@ -180,7 +180,6 @@ func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean Da
 		synaptics := nt.synaptics
 		outputs, err := nt.forward(input, synaptics)
 
-		// fmt.Println(outputs)
 		if err != nil {
 			return errMean, fmt.Errorf("Got an error while train with data %d : %v", i, err)
 		}
@@ -204,7 +203,7 @@ func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean Da
 			return errMean, fmt.Errorf("Got an error while train with data %d : %v", i, err)
 		}
 
-		synaptics = nt.updateWeight(synaptics, delta)
+		nt.updateWeight(synaptics, delta)
 		tmpTErr, err := mean(tErr)
 		if err != nil {
 			return errMean, fmt.Errorf("Got an error while train with data %d : %v", i, err)
@@ -257,7 +256,7 @@ func (nt *Network) backPropagate(grad DataArray, node DataArray, sy synaptic) (D
 	return newGrad, dSet, nil
 }
 
-func (nt *Network) updateWeight(synaptics []synaptic, d deltas) []synaptic {
+func (nt *Network) updateWeight(synaptics []synaptic, d deltas) {
 	for i := 0; i < len(d); i++ {
 		for j := 0; j < len(d[i].w); j++ {
 			for k := 0; k < len(d[i].w[j]); k++ {
@@ -269,8 +268,6 @@ func (nt *Network) updateWeight(synaptics []synaptic, d deltas) []synaptic {
 			synaptics[i].weight.b[j] = synaptics[i].weight.b[j] + d[i].b[j]
 		}
 	}
-	
-	return synaptics
 }
 
 func (nt *Network) Save(path string) (err error) {
