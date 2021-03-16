@@ -84,8 +84,7 @@ func (nt *Network) SetProps(props Props) {
 
 // Test neural network
 func (nt *Network) Test(input DataArray) (DataArray, []int, error) {
-	synaptics := nt.synaptics
-	output, err := nt.forward(input, synaptics)
+	output, err := nt.forward(input)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -103,7 +102,7 @@ func (nt *Network) Test(input DataArray) (DataArray, []int, error) {
 }
 
 // forward - Do single forward feed
-func (nt *Network) forward(input DataArray, synaptics []synaptic) ([]DataArray, error) {
+func (nt *Network) forward(input DataArray) ([]DataArray, error) {
 	inputSize := len(input)
 	if inputSize != nt.inputSize {
 		return nil, fmt.Errorf("Feature input doesn't fit in network feature size. Expect %d nodes, but got %d nodes", nt.inputSize, inputSize)
@@ -111,8 +110,8 @@ func (nt *Network) forward(input DataArray, synaptics []synaptic) ([]DataArray, 
 	
 	var err error
 	var output []DataArray
-	for i := 0; i < len(synaptics); i++ {
-		input, err = nt.propagate(input, synaptics[i])
+	for i := 0; i < len(nt.synaptics); i++ {
+		input, err = nt.propagate(input, i)
 		if (err != nil) {
 			return nil, err
 		}
@@ -122,19 +121,19 @@ func (nt *Network) forward(input DataArray, synaptics []synaptic) ([]DataArray, 
 	return output, nil
 }
 
-func (nt *Network) propagate(input DataArray, sy synaptic) (DataArray, error) {
+func (nt *Network) propagate(input DataArray, synapticIndex int) (DataArray, error) {
 	inputSize := len(input)
-	if inputSize != sy.sourceSize {
-		return nil, fmt.Errorf("Propagate input doesn't fit. Expect %d nodes, but got %d nodes", sy.sourceSize, inputSize)
+	if inputSize != nt.synaptics[synapticIndex].sourceSize {
+		return nil, fmt.Errorf("Propagate input doesn't fit. Expect %d nodes, but got %d nodes", nt.synaptics[synapticIndex].sourceSize, inputSize)
 	}
-	output := make(DataArray, sy.targetSize)
+	output := make(DataArray, nt.synaptics[synapticIndex].targetSize)
 	for j := range output {
 		var sum float64
-		for i := 0; i < sy.sourceSize; i++ {
-			sum += sy.weight.w[i][j] * input[i]
+		for i := 0; i < nt.synaptics[synapticIndex].sourceSize; i++ {
+			sum += nt.synaptics[synapticIndex].weight.w[i][j] * input[i]
 		}
-		sum += sy.weight.b[j]
-		output[j] = sy.activation.Activate(sum)
+		sum += nt.synaptics[synapticIndex].weight.b[j]
+		output[j] = nt.synaptics[synapticIndex].activation.Activate(sum)
 	}
 
 	return output, nil
@@ -177,8 +176,7 @@ func (nt *Network) Train(inputs []DataArray, targets []DataArray) (error) {
 
 func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean DataArray, err error) {
 	for i, input := range inputs {
-		synaptics := nt.synaptics
-		outputs, err := nt.forward(input, synaptics)
+		outputs, err := nt.forward(input)
 
 		if err != nil {
 			return errMean, fmt.Errorf("Got an error while train with data %d : %v", i, err)
@@ -198,12 +196,12 @@ func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean Da
 			grad[j] = tErr[j] * nt.synaptics[len(nt.synaptics) - 1].activation.Derivate(y)
 		}
 
-		delta, err := nt.calculateDelta(grad, nodes, synaptics)
+		delta, err := nt.calculateDelta(grad, nodes)
 		if err != nil {
 			return errMean, fmt.Errorf("Got an error while train with data %d : %v", i, err)
 		}
 
-		nt.updateWeight(synaptics, delta)
+		nt.updateWeight(delta)
 		tmpTErr, err := mean(tErr)
 		if err != nil {
 			return errMean, fmt.Errorf("Got an error while train with data %d : %v", i, err)
@@ -214,10 +212,10 @@ func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean Da
 	return errMean, nil
 } 
 
-func (nt *Network) calculateDelta(grad DataArray, nodes []DataArray, synaptics []synaptic) (deltas, error) {
+func (nt *Network) calculateDelta(grad DataArray, nodes []DataArray) (deltas, error) {
 	result := make([]weight, len(nodes))
 	for i := len(nodes) - 1; i >= 0; i-- {
-		newGrad, d, err := nt.backPropagate(grad, nodes[i], synaptics[i])
+		newGrad, d, err := nt.backPropagate(grad, nodes[i], nt.synaptics[i])
 		if err != nil {
 			return nil, fmt.Errorf("Error calculating delta : %v", err)
 		}
@@ -256,16 +254,16 @@ func (nt *Network) backPropagate(grad DataArray, node DataArray, sy synaptic) (D
 	return newGrad, dSet, nil
 }
 
-func (nt *Network) updateWeight(synaptics []synaptic, d deltas) {
+func (nt *Network) updateWeight(d deltas) {
 	for i := 0; i < len(d); i++ {
 		for j := 0; j < len(d[i].w); j++ {
 			for k := 0; k < len(d[i].w[j]); k++ {
-				synaptics[i].weight.w[j][k] = synaptics[i].weight.w[j][k] + d[i].w[j][k]
+				nt.synaptics[i].weight.w[j][k] = nt.synaptics[i].weight.w[j][k] + d[i].w[j][k]
 			}
 		}
 
 		for j := 0; j < len(d[i].b); j++ {
-			synaptics[i].weight.b[j] = synaptics[i].weight.b[j] + d[i].b[j]
+			nt.synaptics[i].weight.b[j] = nt.synaptics[i].weight.b[j] + d[i].b[j]
 		}
 	}
 }
