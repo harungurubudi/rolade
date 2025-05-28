@@ -1,42 +1,47 @@
 # Rolade
 
-Minimal Neural Network toolkit.
+**A Minimal Neural Network Toolkit in Go**
 
-## Before you go too far
+---
 
-Ini cuma project hore-hore saja. Tidak ada jaminan atas validitas dari metode-metode yang digunakan, atau adanya support maupun pengembangan lebih jauh. Ada baiknya untuk tidak menggunakan pada project yang serius. Semua kerugian yang ditimbulkan akibat menggunakan toolkit ini di luar tanggung jawab kami.
+## Disclaimer
+
+This project was built for fun and learning purposes. There is no guarantee regarding the validity of the methods used, and it is not actively maintained or supported. It is **not recommended** for serious or production use. Use it at your own risk.
+
+---
 
 ## Getting Started
 
-Berikut adalah langkah-langkah untuk menggunakan toolkit ini. Mungkin kurang lengkap, tapi nanti bakal ditambahkan. 
+This section outlines the basic usage of the Rolade toolkit. Some parts may be incomplete and are subject to future updates.
 
-### Defining Network
+---
 
-Untuk memulai, pertama import dulu networknya.
+### Defining a Network
 
-```
+First, import the package:
+
+```go
 import "github.com/harungurubudi/rolade/network"
 ```
 
-Kemudian definisikan struktur network yang anda inginkan. Misal, menginginkan network dengan feature berukuran ``4`` dan target berukuran ``2``, dengan inisiasi fungsi aktivasi ``relu`` :
+To create a new network, define the input and output sizes, and specify an activation function. For example, a network with 4 input features, 2 output targets, and ReLU as the activation function:
 
-```
+```go
 nt := network.NewNetwork(4, 2, &activation.Relu{})
 ```
 
-Tentukan juga hidden layer yang diinginkan. Untuk menambahkan hidden layer, bisa menggunakan method ``AddHiddenLayer`` pada object network. Misal, anda ingin menambahkan dua hidden layer dengan ukuran masing-masing ``4`` dan ``3``, dengan masing-masing fungsi aktivasi ``sigmoid`` dan ``tanh`` : 
+You can add hidden layers using the AddHiddenLayer method. For example, to add two hidden layers of size 4 and 3 using Tanh activation:
 
-```
+```go
 nt.AddHiddenLayer(4, &activation.Tanh{})
 nt.AddHiddenLayer(3, &activation.Tanh{})
 ```
 
+### Configuring Network Properties
 
-### Network Properties
+You can customize the network using the ``SetProps`` method:
 
-Seperti kebanyakan toolkit yang lain, biar keliatan customable, toolkit ini juga bisa diset properti-propertinya sesuai dengan kebutuhan. 
-
-```
+```go
 nt.SetProps(network.Props{
     Optimizer: &optimizer.SGD{
         Alpha: 0.01,
@@ -46,7 +51,7 @@ nt.SetProps(network.Props{
 })
 ```
 
-Berikut daftar properties yang tersedia : 
+#### Available Properties
 
 | Options       | Description                                       | Type                      | Default Value           |
 |---------------|---------------------------------------------------|---------------------------|-------------------------|
@@ -55,72 +60,61 @@ Berikut daftar properties yang tersedia :
 | ErrLimit      | Batas error yang perlu dicapai saat training      | float64                   | 0.001                   |
 | MaxEpoch      | Epoch maksimal saat training                      | int                       | 1000                    |
 
+### Data Types
 
-### Datatype
+All input and output data use ``network.DataArray``, a custom type based on ``[]float64``.
 
-Semua data yang digunakan baik untuk input maupun output dalam toolkit ini adalah data ber tipe ``network.DataArray`` yang merupakan tipe kustom dari ``[]float64``. Untuk mendeklarasikan data tersebut, dapat dilihat contoh berikut : 
-
-```
+```go
 singleData := network.DataArray{0, 0, 0, 1}
 ```
 
+### Training the Network
 
-### Training
+To train the network:
 
-Untuk melakukan proses network training, kita dapat menggunakan method ``Train`` pada network : 
-
+```go
+nt.Train(inputs []DataArray, targets []DataArray) error
 ```
-nt.Train(inputs []DataArray, targets []DataArray) (error)
-``` 
 
-Dengan argument : 
-1. ``inputs``, set data input. Dengan type array of ``network.DataArray``.
-2. ``targets``, set data target. Dengan type array of ``network.DataArray``.
+- ``inputs``: Slice of input ``DataArrays``
+- ``targets``: Slice of target ``DataArrays``
 
+### Testing the Network
 
-### Testing
+To test the network:
 
-Untuk melakukan test dari network, kita dapat menggunakan method ``Test`` pada network : 
-
-```
+```go
 nt.Test(input DataArray) (DataArray, []int, error)
 ```
-Dengan argument : 
-1. ``inputs``, set data input. Dengan type array of ``network.DataArray``.
 
-Method ini mengembalikan tiga result :
-1. Set output asli dari proses testing. Bertipe ``network.DataArray``.
-2. Nilai pembulatan dari output testing. Bertipe ``[]int``. Jika output asli > 0.5 maka akan menjadi 1, sebaliknya akan menjadi 0.
-3. Objek error jika proses testing gagal.
+Returns:
 
+1. The raw output (DataArray)
+2. The binary result after thresholding (values > 0.5 become 1, else 0)
+3. An error object if testing fails
 
-## Activation Function
-Pada toolkit ini, tersedia tiga activation function yang dapat digunakan dalam properties : 
-1. Sigmoid : *activation.Sigmoid
-2. Tanh : *activation.Tanh
-3. RELU : *activation.Relu
+### Activation Functions
 
+Currently supported activation functions:
 
-## Optimizer
-Berikut optimizer algorithm yang tersedia juga. Cuma satu sih :(  
+- ``*activation.Sigmoid``
+- ``*activation.Tanh``
+- ``*activation.Relu``
 
-1. SGD : *optimizer.SGD. Dengan properties sebagai berikut :
-    - ``Alpha`` (learning rates) : float64
-    - ``M`` (momentum) : float64
-    - ``IsNesterov`` (Nesterov toggle) : bool
-    - ``V`` (Velocity) : float64
+### Optimizers
 
+Currently only one optimizer is supported:
 
-## Loss
-Sedangkan berikut loss function yang tersedia. Cuma satu juga :(( 
+- SGD (``*optimizer.SGD``)
+  - Alpha: Learning rate
+  - M: Momentum
+  - IsNesterov: Use Nesterov momentum
+  - V: Velocity
 
-1.RMSE : *loss.RMSE
+### Loss Functions
 
+Only one loss function is available:
+- RMSE (``*loss.RMSE``)
 
-## Minimum Example
-
-Contoh sederhana bisa dilihat di directory example.
-
-## To Do 
-1. More network attribute
-2. Batch paralel training
+### Examples
+A simple usage example is available in the ``example`` directory.
