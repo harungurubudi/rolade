@@ -4,6 +4,11 @@ import (
 	"math"
 )
 
+// ReLU (Rectified Linear Unit) is a commonly used activation function
+// in neural networks. It outputs the input directly if it is positive,
+// otherwise it outputs zero. Its derivative is 1 for positive inputs
+// and 0 for non-positive inputs. ReLU is popular due to its simplicity
+// and ability to mitigate the vanishing gradient problem.
 type ReLU struct{}
 
 var zero float64
