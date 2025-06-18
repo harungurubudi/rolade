@@ -146,19 +146,3 @@ func mean(vals DataArray) (result float64, err error) {
 
 	return sum / float64(len(vals)), nil
 }
-
-func mergeWeights(a []weight, b []weight) []weight {
-	for i := 0; i < len(b); i++ {
-		for j := 0; j < len(b[i].weight); j++ {
-			for k := 0; k < len(b[i].weight[j]); k++ {
-				a[i].weight[j][k] = a[i].weight[j][k] + b[i].weight[j][k]
-			}
-		}
-
-		for j := 0; j < len(b[i].bias); j++ {
-			a[i].bias[j] = a[i].bias[j] + b[i].bias[j]
-		}
-	}
-
-	return a
-}
