@@ -1,28 +1,39 @@
 package optimizer
 
-import(
-	"fmt"
+import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/harungurubudi/rolade/profile"
 )
 
-func Generate(attr *profile.Attr) (optimizer IOptimizer, err error) {
-	switch attr.Name{
-	case "sgd":
+// registry maps optimizer names to their corresponding constructor functions.
+// Each function takes a JSON-encoded string of optimizer properties
+// and returns an IOptimizer instance or an error.
+var registry = map[string]func(string) (IOptimizer, error){
+	"sgd": func(props string) (IOptimizer, error) {
 		var o SGD
-		err := json.Unmarshal([]byte(attr.Props), &o)
+		err := json.Unmarshal([]byte(props), &o)
 		if err != nil {
-			return generateFailed(err)
+			return nil, fmt.Errorf("got error while generating optimizer function: %v", err)
 		}
-		optimizer = &o
-	default:
-		return nil, fmt.Errorf("Optimizer function not found")
-	}
-
-	return optimizer, nil
+		return &o, nil
+	},
 }
 
-func generateFailed(err error) (IOptimizer, error) {
-	return nil, fmt.Errorf("Got error while generate optimizer function: %v", err)
+// Generate creates an IOptimizer instance based on the given profile.Attr,
+// which includes the optimizer name and its serialized properties.
+// It returns an error if the optimizer name is not supported
+// or if instantiation fails.
+//
+// Example:
+//
+//	attr := &profile.Attr{Name: "sgd", Props: "{\"LearningRate\":0.01}"}
+//	optimizer, err := Generate(attr)
+func Generate(attr *profile.Attr) (IOptimizer, error) {
+	if gen, ok := registry[strings.ToLower(attr.Name)]; ok {
+		return gen(attr.Props)
+	}
+	return nil, fmt.Errorf("unsupported optimizer: %s", attr.Name)
 }

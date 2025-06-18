@@ -9,12 +9,12 @@ import (
 
 func TestGenerateSGD(t *testing.T) {
 	attr := &profile.Attr{
-		Name: "sgd",
-		Props: `{"Alpha": 0.001, "M": 0, "IsNesterov": false, "V": 0}`,
+		Name:  "sgd",
+		Props: `{"Alpha": 0.001, "Momentum": 0, "IsNesterov": false, "Velocity": 0}`,
 	}
 
 	optimizer, err := Generate(attr)
-	if err != nil { 
+	if err != nil {
 		t.Errorf("Error test optimizer generator : %v", err)
 	}
 
@@ -22,6 +22,5 @@ func TestGenerateSGD(t *testing.T) {
 	resultType := reflect.TypeOf(optimizer).Elem().Name()
 	if resultType != expectedType {
 		t.Errorf("Error test optimizer generator : Expected %s, got %s", expectedType, resultType)
-	}	
+	}
 }
-

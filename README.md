@@ -107,9 +107,9 @@ Currently only one optimizer is supported:
 
 - SGD (``*optimizer.SGD``)
   - Alpha: Learning rate
-  - M: Momentum
+  - Momentum: Momentum
   - IsNesterov: Use Nesterov momentum
-  - V: Velocity
+  - Velocity: Velocity
 
 ### Loss Functions
 
