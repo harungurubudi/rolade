@@ -4,15 +4,15 @@ import (
 	"math"
 )
 
-type Relu struct{}
+type ReLU struct{}
 
 var zero float64
 
-func (s *Relu) Activate(val float64) (result float64) {
+func (s *ReLU) Activate(val float64) (result float64) {
 	return math.Max(zero, val)
 }
 
-func (s *Relu) Derivate(val float64) (result float64) {
+func (s *ReLU) Derivate(val float64) (result float64) {
 	if val >= zero {
 		return 1
 	}
@@ -20,6 +20,6 @@ func (s *Relu) Derivate(val float64) (result float64) {
 	return 0
 }
 
-func (l *Relu) CallMe() string {
+func (l *ReLU) CallMe() string {
 	return "relu"
 }

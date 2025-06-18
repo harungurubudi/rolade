@@ -27,7 +27,7 @@ import "github.com/harungurubudi/rolade/network"
 To create a new network, define the input and output sizes, and specify an activation function. For example, a network with 4 input features, 2 output targets, and ReLU as the activation function:
 
 ```go
-nt := network.NewNetwork(4, 2, &activation.Relu{})
+nt := network.NewNetwork(4, 2, &activation.ReLU{})
 ```
 
 You can add hidden layers using the AddHiddenLayer method. For example, to add two hidden layers of size 4 and 3 using Tanh activation:
@@ -99,7 +99,7 @@ Currently supported activation functions:
 
 - ``*activation.Sigmoid``
 - ``*activation.Tanh``
-- ``*activation.Relu``
+- ``*activation.ReLU``
 
 ### Optimizers
 

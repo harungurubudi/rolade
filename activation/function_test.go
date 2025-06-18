@@ -7,14 +7,14 @@ import (
 	"github.com/harungurubudi/rolade/profile"
 )
 
-func TestGenerateSigmoid(t *testing.T) {
+func TestLoadSigmoid(t *testing.T) {
 	attr := &profile.Attr{
-		Name: "sigmoid",
+		Name:  "sigmoid",
 		Props: "{}",
 	}
 
-	activation, err := Generate(attr)
-	if err != nil { 
+	activation, err := Load(attr)
+	if err != nil {
 		t.Errorf("Error test activation generator : %v", err)
 	}
 
@@ -25,32 +25,32 @@ func TestGenerateSigmoid(t *testing.T) {
 	}
 }
 
-func TestGenerateRelu(t *testing.T) {
+func TestLoadReLU(t *testing.T) {
 	attr := &profile.Attr{
-		Name: "relu",
+		Name:  "relu",
 		Props: "{}",
 	}
 
-	activation, err := Generate(attr)
-	if err != nil { 
+	activation, err := Load(attr)
+	if err != nil {
 		t.Errorf("Error test activation generator : %v", err)
 	}
 
-	expectedType := "Relu"
+	expectedType := "ReLU"
 	resultType := reflect.TypeOf(activation).Elem().Name()
 	if resultType != expectedType {
 		t.Errorf("Error test activation generator : Expected %s, got %s", expectedType, resultType)
 	}
 }
 
-func TestGenerateTanh(t *testing.T) {
+func TestLoadTanh(t *testing.T) {
 	attr := &profile.Attr{
-		Name: "tanh",
+		Name:  "tanh",
 		Props: "{}",
 	}
 
-	activation, err := Generate(attr)
-	if err != nil { 
+	activation, err := Load(attr)
+	if err != nil {
 		t.Errorf("Error test activation generator : %v", err)
 	}
 
@@ -60,4 +60,3 @@ func TestGenerateTanh(t *testing.T) {
 		t.Errorf("Error test activation generator : Expected %s, got %s", expectedType, resultType)
 	}
 }
-

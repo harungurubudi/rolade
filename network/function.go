@@ -1,10 +1,10 @@
 package network
 
 import (
-	"fmt"
-	"math/rand"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 
 	"github.com/harungurubudi/rolade/activation"
 	"github.com/harungurubudi/rolade/loss"
@@ -29,17 +29,17 @@ func NewNetwork(inputSize int, outputSize int, activation activation.IActivation
 	synaptics = append(synaptics, sy)
 
 	nt = &Network{
-		inputSize: inputSize,
+		inputSize:  inputSize,
 		outputSize: outputSize,
 		props: Props{
-			Loss:       &loss.RMSE{},
-			Optimizer:  optimizer.NewSGD(),
-			ErrLimit:  	0.001,
-			MaxEpoch: 	1000,
+			Loss:      &loss.RMSE{},
+			Optimizer: optimizer.NewSGD(),
+			ErrLimit:  0.001,
+			MaxEpoch:  1000,
 		},
 		synaptics: synaptics,
 	}
-	
+
 	return nt, nil
 }
 
@@ -52,7 +52,7 @@ func NewNetwork(inputSize int, outputSize int, activation activation.IActivation
 // Returns the restored *Network or an error if deserialization or instantiation fails.
 func Load(path string) (nt *Network, err error) {
 	ntb, err := ioutil.ReadFile(path + "/rolade.profile")
-    if err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("Got error while load model file: %v", err)
 	}
 
@@ -64,7 +64,7 @@ func Load(path string) (nt *Network, err error) {
 
 	var syn []synaptic
 	for _, sySource := range pr.Synaptics {
-		a, err := activation.Generate(&sySource.Activation)
+		a, err := activation.Load(&sySource.Activation)
 		if err != nil {
 			return nil, fmt.Errorf("Got error while load model: %v", err)
 		}
@@ -76,7 +76,7 @@ func Load(path string) (nt *Network, err error) {
 				w: sySource.Weight.W,
 				b: sySource.Weight.B,
 			},
-			activation: a, 
+			activation: a,
 		})
 	}
 
@@ -91,20 +91,20 @@ func Load(path string) (nt *Network, err error) {
 	}
 
 	return &Network{
-		inputSize: pr.InputSize,
+		inputSize:  pr.InputSize,
 		outputSize: pr.OutputSize,
 		props: Props{
-			Loss: l,
-			Optimizer: o, 
-			ErrLimit: pr.Props.ErrLimit,
-			MaxEpoch: pr.Props.MaxEpoch,
+			Loss:      l,
+			Optimizer: o,
+			ErrLimit:  pr.Props.ErrLimit,
+			MaxEpoch:  pr.Props.MaxEpoch,
 		},
 		synaptics: syn,
 	}, nil
 }
 
 func generateSynaptic(sourceSize int, targetSize int, activation activation.IActivation) (sy synaptic, err error) {
-	var w [][]float64 
+	var w [][]float64
 	for i := 0; i < sourceSize; i++ {
 		var tmp []float64
 		for j := 0; j < targetSize; j++ {
@@ -117,7 +117,7 @@ func generateSynaptic(sourceSize int, targetSize int, activation activation.IAct
 	for j := 0; j < targetSize; j++ {
 		b = append(b, getRandomFloat(-0.5, 0.5))
 	}
-	
+
 	result := synaptic{
 		sourceSize: sourceSize,
 		targetSize: targetSize,
@@ -128,7 +128,7 @@ func generateSynaptic(sourceSize int, targetSize int, activation activation.IAct
 		activation: activation,
 	}
 	return result, nil
-} 
+}
 
 func getRandomFloat(min, max float64) float64 {
 	return min + rand.Float64()*(max-min)
@@ -139,7 +139,7 @@ func mean(vals DataArray) (result float64, err error) {
 		return result, fmt.Errorf("Got error while calculating mean : division by zero")
 	}
 
-	var sum float64 
+	var sum float64
 	for _, val := range vals {
 		sum += val
 	}
@@ -159,6 +159,6 @@ func mergeWeights(a []weight, b []weight) []weight {
 			a[i].b[j] = a[i].b[j] + b[i].b[j]
 		}
 	}
-	
+
 	return a
 }
