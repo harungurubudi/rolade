@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/harungurubudi/rolade/profile"
+	"github.com/harungurubudi/rolade/model"
 )
 
 // registry maps activation function names to their constructor functions.
@@ -23,7 +23,7 @@ var registry = map[string]func(string) (IActivation, error){
 //
 // Returns an error if the activation type is not supported or if deserialization fails.
 
-func Load(attr *profile.Attr) (IActivation, error) {
+func Load(attr *model.Attr) (IActivation, error) {
 	if gen, ok := registry[strings.ToLower(attr.Name)]; ok {
 		return gen(attr.Props)
 	}

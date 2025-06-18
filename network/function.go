@@ -8,8 +8,8 @@ import (
 
 	"github.com/harungurubudi/rolade/activation"
 	"github.com/harungurubudi/rolade/loss"
+	"github.com/harungurubudi/rolade/model"
 	"github.com/harungurubudi/rolade/optimizer"
-	"github.com/harungurubudi/rolade/profile"
 )
 
 // NewNetwork creates and initializes a new feedforward neural network with a single layer,
@@ -56,7 +56,7 @@ func Load(path string) (nt *Network, err error) {
 		return nil, fmt.Errorf("Got error while load model file: %v", err)
 	}
 
-	var pr profile.Network
+	var pr model.Network
 	err = json.Unmarshal(ntb, &pr)
 	if err != nil {
 		return nil, fmt.Errorf("Got error while unmarshalling model: %v", err)

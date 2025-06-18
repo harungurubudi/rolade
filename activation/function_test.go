@@ -4,11 +4,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/harungurubudi/rolade/profile"
+	"github.com/harungurubudi/rolade/model"
 )
 
 func TestLoadSigmoid(t *testing.T) {
-	attr := &profile.Attr{
+	attr := &model.Attr{
 		Name:  "sigmoid",
 		Props: "{}",
 	}
@@ -26,7 +26,7 @@ func TestLoadSigmoid(t *testing.T) {
 }
 
 func TestLoadReLU(t *testing.T) {
-	attr := &profile.Attr{
+	attr := &model.Attr{
 		Name:  "relu",
 		Props: "{}",
 	}
@@ -44,7 +44,7 @@ func TestLoadReLU(t *testing.T) {
 }
 
 func TestLoadTanh(t *testing.T) {
-	attr := &profile.Attr{
+	attr := &model.Attr{
 		Name:  "tanh",
 		Props: "{}",
 	}

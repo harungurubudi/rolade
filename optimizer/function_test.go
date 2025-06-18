@@ -4,11 +4,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/harungurubudi/rolade/profile"
+	"github.com/harungurubudi/rolade/model"
 )
 
 func TestGenerateSGD(t *testing.T) {
-	attr := &profile.Attr{
+	attr := &model.Attr{
 		Name:  "sgd",
 		Props: `{"Alpha": 0.001, "Momentum": 0, "IsNesterov": false, "Velocity": 0}`,
 	}

@@ -1,16 +1,16 @@
 package network
 
 import (
-	"os"
-	"log"
-	"fmt"
-	"time"
 	"encoding/json"
-	
+	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/harungurubudi/rolade/activation"
 	"github.com/harungurubudi/rolade/loss"
+	"github.com/harungurubudi/rolade/model"
 	"github.com/harungurubudi/rolade/optimizer"
-	"github.com/harungurubudi/rolade/profile"
 )
 
 type DataArray []float64
@@ -19,10 +19,10 @@ type (
 	// Props defines the configuration for training the neural network,
 	// including the loss function, optimizer, error limit, and maximum number of epochs.
 	Props struct {
-		Loss       loss.ILoss
-		Optimizer  optimizer.IOptimizer
-		ErrLimit   float64
-		MaxEpoch   int
+		Loss      loss.ILoss
+		Optimizer optimizer.IOptimizer
+		ErrLimit  float64
+		MaxEpoch  int
 	}
 
 	// weight contains the weights and biases of a layer in the neural network.
@@ -36,18 +36,18 @@ type (
 	synaptic struct {
 		sourceSize int
 		targetSize int
-		weight weight
+		weight     weight
 		activation activation.IActivation
 	}
-	
+
 	// Network represents a feedforward neural network composed of fully connected layers.
 	// It maintains the structure of the network (input/output sizes, layer weights, activations)
 	// and provides methods for forward propagation, backpropagation, and training.
 	Network struct {
-		inputSize int
+		inputSize  int
 		outputSize int
-		props Props
-		synaptics []synaptic 
+		props      Props
+		synaptics  []synaptic
 	}
 
 	// deltas is a slice of weight updates used during backpropagation.
@@ -58,12 +58,12 @@ type (
 func (nt *Network) AddLayer(size int, activation activation.IActivation) error {
 	netSize := len(nt.synaptics)
 	if netSize > 0 {
-		lastLayer := nt.synaptics[netSize - 1]
+		lastLayer := nt.synaptics[netSize-1]
 		sy, err := generateSynaptic(lastLayer.sourceSize, size, lastLayer.activation)
 		if err != nil {
 			return fmt.Errorf("Got error while add layer: %v", err)
 		}
-		nt.synaptics[netSize - 1] = sy
+		nt.synaptics[netSize-1] = sy
 	}
 
 	sy, err := generateSynaptic(size, nt.outputSize, activation)
@@ -98,15 +98,15 @@ func (nt *Network) Test(input DataArray) (DataArray, []int, error) {
 	}
 
 	var result []int
-	for _, item := range output[len(output) - 1] {
+	for _, item := range output[len(output)-1] {
 		if item > 0.5 {
 			result = append(result, 1)
 		} else {
 			result = append(result, 0)
 		}
 	}
-	
-	return output[len(output) - 1], result, nil
+
+	return output[len(output)-1], result, nil
 }
 
 // forward performs a full forward pass through the network given an input vector.
@@ -117,17 +117,17 @@ func (nt *Network) forward(input DataArray) ([]DataArray, error) {
 	if inputSize != nt.inputSize {
 		return nil, fmt.Errorf("Feature input doesn't fit in network feature size. Expect %d nodes, but got %d nodes", nt.inputSize, inputSize)
 	}
-	
+
 	var err error
 	var output []DataArray
 	for i := 0; i < len(nt.synaptics); i++ {
 		input, err = nt.propagate(input, i)
-		if (err != nil) {
+		if err != nil {
 			return nil, err
 		}
 		output = append(output, input)
 	}
-	
+
 	return output, nil
 }
 
@@ -161,7 +161,7 @@ func (nt *Network) propagate(input DataArray, synapticIndex int) (DataArray, err
 // applies optimizer updates, and logs progress at checkpoints.
 //
 // Returns an error if the input and target sizes do not match, or if an error occurs during training.
-func (nt *Network) Train(inputs []DataArray, targets []DataArray) (error) {
+func (nt *Network) Train(inputs []DataArray, targets []DataArray) error {
 	inputSize := len(inputs)
 	targetSize := len(targets)
 	if inputSize != targetSize {
@@ -179,8 +179,8 @@ func (nt *Network) Train(inputs []DataArray, targets []DataArray) (error) {
 
 		loss := nt.props.Loss.Calculate(errMean)
 		lastLoss = loss
-		
-		if epoch % checkPointBatch == 0 {
+
+		if epoch%checkPointBatch == 0 {
 			log.Printf("Epoch %d got loss (%s) : %f\n", epoch, nt.props.Loss.CallMe(), loss)
 		}
 
@@ -211,16 +211,16 @@ func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean Da
 
 		// Shift nodes
 		nodes := []DataArray{input}
-		nodes = append(nodes, outputs[:len(outputs) - 1]...)
+		nodes = append(nodes, outputs[:len(outputs)-1]...)
 
 		// Count error : expected target - final output
 		tErr := make(DataArray, len(targets[i]))
 		grad := make(DataArray, len(targets[i]))
 
 		for j, n := range targets[i] {
-			y := outputs[len(outputs) - 1][j]
+			y := outputs[len(outputs)-1][j]
 			tErr[j] = n - y
-			grad[j] = tErr[j] * nt.synaptics[len(nt.synaptics) - 1].activation.Derivate(y)
+			grad[j] = tErr[j] * nt.synaptics[len(nt.synaptics)-1].activation.Derivate(y)
 		}
 
 		delta, err := nt.calculateDelta(grad, nodes)
@@ -232,12 +232,12 @@ func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean Da
 		tmpTErr, err := mean(tErr)
 		if err != nil {
 			return errMean, fmt.Errorf("Got an error while train with data %d : %v", i, err)
-		} 
+		}
 		errMean = append(errMean, tmpTErr)
 	}
 
 	return errMean, nil
-} 
+}
 
 // calculateDelta computes the weight and bias deltas for the entire network
 // by backpropagating the gradient through each layer in reverse order.
@@ -272,8 +272,8 @@ func (nt *Network) backPropagate(grad DataArray, node DataArray, sy synaptic) (D
 		var wDeltaLocal []float64
 		for j := 0; j < len(grad); j++ {
 			tErrLocalSum += (grad[j] * sy.weight.w[i][j])
-			wDeltaLocal = append(wDeltaLocal, nt.props.Optimizer.CalculateDelta(node[i] * grad[j]))
-		} 
+			wDeltaLocal = append(wDeltaLocal, nt.props.Optimizer.CalculateDelta(node[i]*grad[j]))
+		}
 		newGrad[i] = tErrLocalSum * sy.activation.Derivate(node[i])
 		wDelta = append(wDelta, wDeltaLocal)
 	}
@@ -315,47 +315,47 @@ func (nt *Network) updateWeight(d deltas) {
 //
 // Returns an error if any step in the marshaling or writing process fails.
 func (nt *Network) Save(path string) (err error) {
-	var sy []profile.Synaptic
+	var sy []model.Synaptic
 	for _, sySource := range nt.synaptics {
-		ajs, err := json.Marshal(sySource.activation) 
+		ajs, err := json.Marshal(sySource.activation)
 		if err != nil {
 			return fmt.Errorf("Got error while marshalling activation: %v", err)
 		}
-		sy = append(sy, profile.Synaptic{
+		sy = append(sy, model.Synaptic{
 			SourceSize: sySource.sourceSize,
 			TargetSize: sySource.targetSize,
-			Weight: profile.Weight{
+			Weight: model.Weight{
 				W: sySource.weight.w,
 				B: sySource.weight.b,
 			},
-			Activation: profile.Attr{
-				Name: sySource.activation.CallMe(),
+			Activation: model.Attr{
+				Name:  sySource.activation.CallMe(),
 				Props: string(ajs),
 			},
 		})
 	}
 
-	ljs, err := json.Marshal(nt.props.Loss) 
+	ljs, err := json.Marshal(nt.props.Loss)
 	if err != nil {
 		return fmt.Errorf("Got error while marshalling loss: %v", err)
 	}
 
-	ojs, err := json.Marshal(nt.props.Optimizer) 
+	ojs, err := json.Marshal(nt.props.Optimizer)
 	if err != nil {
 		return fmt.Errorf("Got error while marshalling optimizer: %v", err)
 	}
 
-	r := profile.Network{
-		InputSize: nt.inputSize,
+	r := model.Network{
+		InputSize:  nt.inputSize,
 		OutputSize: nt.outputSize,
-		Synaptics: sy,
-		Props: profile.Props{
-			Loss: profile.Attr{
-				Name: nt.props.Loss.CallMe(),
+		Synaptics:  sy,
+		Props: model.Props{
+			Loss: model.Attr{
+				Name:  nt.props.Loss.CallMe(),
 				Props: string(ljs),
 			},
-			Optimizer: profile.Attr{
-				Name: nt.props.Optimizer.CallMe(),
+			Optimizer: model.Attr{
+				Name:  nt.props.Optimizer.CallMe(),
 				Props: string(ojs),
 			},
 			ErrLimit: nt.props.ErrLimit,
