@@ -7,14 +7,14 @@ import (
 	"github.com/harungurubudi/rolade/profile"
 )
 
-func TestGenerateRMSE(t *testing.T) {
+func TestLoadRMSE(t *testing.T) {
 	attr := &profile.Attr{
-		Name: "rmse",
+		Name:  "rmse",
 		Props: "{}",
 	}
 
-	loss, err := Generate(attr)
-	if err != nil { 
+	loss, err := Load(attr)
+	if err != nil {
 		t.Errorf("Error test loss generator : %v", err)
 	}
 
@@ -24,4 +24,3 @@ func TestGenerateRMSE(t *testing.T) {
 		t.Errorf("Error test loss generator : Expected %s, got %s", expectedType, resultType)
 	}
 }
-

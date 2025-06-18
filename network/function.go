@@ -80,7 +80,7 @@ func Load(path string) (nt *Network, err error) {
 		})
 	}
 
-	l, err := loss.Generate(&pr.Props.Loss)
+	l, err := loss.Load(&pr.Props.Loss)
 	if err != nil {
 		return nil, fmt.Errorf("Got error while load model: %v", err)
 	}
