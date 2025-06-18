@@ -16,7 +16,8 @@ import (
 type DataArray []float64
 
 type (
-	// Network
+	// Props defines the configuration for training the neural network,
+	// including the loss function, optimizer, error limit, and maximum number of epochs.
 	Props struct {
 		Loss       loss.ILoss
 		Optimizer  optimizer.IOptimizer
@@ -24,11 +25,14 @@ type (
 		MaxEpoch   int
 	}
 
+	// weight contains the weights and biases of a layer in the neural network.
 	weight struct {
 		w [][]float64
 		b []float64
 	}
 
+	// synaptic defines a layer's structure, including the number of input/output neurons,
+	// weights, and activation function used during forward and backward passes.
 	synaptic struct {
 		sourceSize int
 		targetSize int
@@ -36,6 +40,9 @@ type (
 		activation activation.IActivation
 	}
 	
+	// Network represents a feedforward neural network composed of fully connected layers.
+	// It maintains the structure of the network (input/output sizes, layer weights, activations)
+	// and provides methods for forward propagation, backpropagation, and training.
 	Network struct {
 		inputSize int
 		outputSize int
@@ -43,6 +50,7 @@ type (
 		synaptics []synaptic 
 	}
 
+	// deltas is a slice of weight updates used during backpropagation.
 	deltas []weight
 )
 
