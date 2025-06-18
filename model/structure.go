@@ -14,8 +14,8 @@ type (
 	}
 
 	Weight struct {
-		W [][]float64 `json:"w"`
-		B []float64   `json:"b"`
+		Weight [][]float64 `json:"w"`
+		Bias   []float64   `json:"b"`
 	}
 
 	Synaptic struct {

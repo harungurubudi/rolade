@@ -73,8 +73,8 @@ func Load(path string) (nt *Network, err error) {
 			sourceSize: sySource.SourceSize,
 			targetSize: sySource.TargetSize,
 			weight: weight{
-				w: sySource.Weight.W,
-				b: sySource.Weight.B,
+				weight: sySource.Weight.Weight,
+				bias:   sySource.Weight.Bias,
 			},
 			activation: a,
 		})
@@ -122,8 +122,8 @@ func generateSynaptic(sourceSize int, targetSize int, activation activation.IAct
 		sourceSize: sourceSize,
 		targetSize: targetSize,
 		weight: weight{
-			w: w,
-			b: b,
+			weight: w,
+			bias:   b,
 		},
 		activation: activation,
 	}
@@ -149,14 +149,14 @@ func mean(vals DataArray) (result float64, err error) {
 
 func mergeWeights(a []weight, b []weight) []weight {
 	for i := 0; i < len(b); i++ {
-		for j := 0; j < len(b[i].w); j++ {
-			for k := 0; k < len(b[i].w[j]); k++ {
-				a[i].w[j][k] = a[i].w[j][k] + b[i].w[j][k]
+		for j := 0; j < len(b[i].weight); j++ {
+			for k := 0; k < len(b[i].weight[j]); k++ {
+				a[i].weight[j][k] = a[i].weight[j][k] + b[i].weight[j][k]
 			}
 		}
 
-		for j := 0; j < len(b[i].b); j++ {
-			a[i].b[j] = a[i].b[j] + b[i].b[j]
+		for j := 0; j < len(b[i].bias); j++ {
+			a[i].bias[j] = a[i].bias[j] + b[i].bias[j]
 		}
 	}
 

@@ -27,8 +27,8 @@ type (
 
 	// weight contains the weights and biases of a layer in the neural network.
 	weight struct {
-		w [][]float64
-		b []float64
+		weight [][]float64
+		bias   []float64
 	}
 
 	// synaptic defines a layer's structure, including the number of input/output neurons,
@@ -144,9 +144,9 @@ func (nt *Network) propagate(input DataArray, synapticIndex int) (DataArray, err
 	for j := range output {
 		var sum float64
 		for i := 0; i < nt.synaptics[synapticIndex].sourceSize; i++ {
-			sum += nt.synaptics[synapticIndex].weight.w[i][j] * input[i]
+			sum += nt.synaptics[synapticIndex].weight.weight[i][j] * input[i]
 		}
-		sum += nt.synaptics[synapticIndex].weight.b[j]
+		sum += nt.synaptics[synapticIndex].weight.bias[j]
 		output[j] = nt.synaptics[synapticIndex].activation.Activate(sum)
 	}
 
@@ -264,28 +264,28 @@ func (nt *Network) calculateDelta(grad DataArray, nodes []DataArray) (deltas, er
 //
 // Returns the new gradient, the calculated weight deltas, or an error if the process fails.
 func (nt *Network) backPropagate(grad DataArray, node DataArray, sy synaptic) (DataArray, weight, error) {
-	var wDelta [][]float64
+	var weightDelta [][]float64
 	newGrad := make(DataArray, len(node))
 
 	for i := 0; i < len(node); i++ {
 		var tErrLocalSum float64
-		var wDeltaLocal []float64
+		var weightDeltaLocal []float64
 		for j := 0; j < len(grad); j++ {
-			tErrLocalSum += (grad[j] * sy.weight.w[i][j])
-			wDeltaLocal = append(wDeltaLocal, nt.props.Optimizer.CalculateDelta(node[i]*grad[j]))
+			tErrLocalSum += (grad[j] * sy.weight.weight[i][j])
+			weightDeltaLocal = append(weightDeltaLocal, nt.props.Optimizer.CalculateDelta(node[i]*grad[j]))
 		}
 		newGrad[i] = tErrLocalSum * sy.activation.Derivate(node[i])
-		wDelta = append(wDelta, wDeltaLocal)
+		weightDelta = append(weightDelta, weightDeltaLocal)
 	}
 
-	var bDelta []float64
+	var biasDelta []float64
 	for j := 0; j < len(grad); j++ {
-		bDelta = append(bDelta, nt.props.Optimizer.CalculateDelta(grad[j]))
+		biasDelta = append(biasDelta, nt.props.Optimizer.CalculateDelta(grad[j]))
 	}
 
 	dSet := weight{
-		w: wDelta,
-		b: bDelta,
+		weight: weightDelta,
+		bias:   biasDelta,
 	}
 
 	return newGrad, dSet, nil
@@ -295,14 +295,14 @@ func (nt *Network) backPropagate(grad DataArray, node DataArray, sy synaptic) (D
 // This modifies the model in-place using simple addition of deltas to existing parameters.
 func (nt *Network) updateWeight(d deltas) {
 	for i := 0; i < len(d); i++ {
-		for j := 0; j < len(d[i].w); j++ {
-			for k := 0; k < len(d[i].w[j]); k++ {
-				nt.synaptics[i].weight.w[j][k] = nt.synaptics[i].weight.w[j][k] + d[i].w[j][k]
+		for j := 0; j < len(d[i].weight); j++ {
+			for k := 0; k < len(d[i].weight[j]); k++ {
+				nt.synaptics[i].weight.weight[j][k] = nt.synaptics[i].weight.weight[j][k] + d[i].weight[j][k]
 			}
 		}
 
-		for j := 0; j < len(d[i].b); j++ {
-			nt.synaptics[i].weight.b[j] = nt.synaptics[i].weight.b[j] + d[i].b[j]
+		for j := 0; j < len(d[i].bias); j++ {
+			nt.synaptics[i].weight.bias[j] = nt.synaptics[i].weight.bias[j] + d[i].bias[j]
 		}
 	}
 }
@@ -325,8 +325,8 @@ func (nt *Network) Save(path string) (err error) {
 			SourceSize: sySource.sourceSize,
 			TargetSize: sySource.targetSize,
 			Weight: model.Weight{
-				W: sySource.weight.w,
-				B: sySource.weight.b,
+				Weight: sySource.weight.weight,
+				Bias:   sySource.weight.bias,
 			},
 			Activation: model.Attr{
 				Name:  sySource.activation.CallMe(),
