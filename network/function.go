@@ -12,6 +12,13 @@ import (
 	"github.com/harungurubudi/rolade/profile"
 )
 
+// NewNetwork creates and initializes a new feedforward neural network with a single layer,
+// using the given input and output sizes and a shared activation function for the layer.
+//
+// The network is configured with default training properties: RMSE loss,
+// SGD optimizer, a max error threshold of 0.001, and up to 1000 training epochs.
+//
+// Returns the initialized *Network or an error if layer creation fails.
 func NewNetwork(inputSize int, outputSize int, activation activation.IActivation) (nt *Network, err error) {
 	var synaptics []synaptic
 	sy, err := generateSynaptic(inputSize, outputSize, activation)
@@ -36,6 +43,13 @@ func NewNetwork(inputSize int, outputSize int, activation activation.IActivation
 	return nt, nil
 }
 
+// Load reads a serialized network profile from the specified directory and reconstructs
+// the full network configuration, including layers, weights, activation functions,
+// loss function, and optimizer.
+//
+// The profile file must be located at `path + "/rolade.profile"`.
+//
+// Returns the restored *Network or an error if deserialization or instantiation fails.
 func Load(path string) (nt *Network, err error) {
 	ntb, err := ioutil.ReadFile(path + "/rolade.profile")
     if err != nil {

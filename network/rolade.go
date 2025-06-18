@@ -109,7 +109,9 @@ func (nt *Network) Test(input DataArray) (DataArray, []int, error) {
 	return output[len(output) - 1], result, nil
 }
 
-// forward - Do single forward feed
+// forward performs a full forward pass through the network given an input vector.
+// It returns the output of each layer (including the final output layer) as a slice of DataArray,
+// or an error if the input size does not match the expected input size of the network.
 func (nt *Network) forward(input DataArray) ([]DataArray, error) {
 	inputSize := len(input)
 	if inputSize != nt.inputSize {
@@ -129,6 +131,10 @@ func (nt *Network) forward(input DataArray) ([]DataArray, error) {
 	return output, nil
 }
 
+// propagate computes the output of a single layer (synaptic connection) in the network.
+// It applies the layer's weights, biases, and activation function to the input vector,
+// returning the resulting output vector or an error if the input size does not match
+// the expected number of source nodes.
 func (nt *Network) propagate(input DataArray, synapticIndex int) (DataArray, error) {
 	inputSize := len(input)
 	if inputSize != nt.synaptics[synapticIndex].sourceSize {
@@ -147,7 +153,14 @@ func (nt *Network) propagate(input DataArray, synapticIndex int) (DataArray, err
 	return output, nil
 }
 
-// Train - Train neural network
+// Train runs the training process over the given input and target data using the configured
+// optimizer and loss function. It trains for a maximum number of epochs or until the loss
+// falls below the configured error limit (ErrLimit).
+//
+// During training, it performs forward and backward passes for each data pair,
+// applies optimizer updates, and logs progress at checkpoints.
+//
+// Returns an error if the input and target sizes do not match, or if an error occurs during training.
 func (nt *Network) Train(inputs []DataArray, targets []DataArray) (error) {
 	inputSize := len(inputs)
 	targetSize := len(targets)
@@ -182,6 +195,12 @@ func (nt *Network) Train(inputs []DataArray, targets []DataArray) (error) {
 	return nil
 }
 
+// trainSet performs one training iteration over the full dataset.
+// For each input-target pair, it executes forward propagation, calculates the error and gradient,
+// performs backpropagation to compute weight deltas, updates the weights, and accumulates
+// the mean error per sample.
+//
+// Returns the slice of per-sample errors or an error if any part of the process fails.
 func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean DataArray, err error) {
 	for i, input := range inputs {
 		outputs, err := nt.forward(input)
@@ -220,6 +239,11 @@ func (nt *Network) trainSet(inputs []DataArray, targets []DataArray) (errMean Da
 	return errMean, nil
 } 
 
+// calculateDelta computes the weight and bias deltas for the entire network
+// by backpropagating the gradient through each layer in reverse order.
+// The result is a slice of weight structs representing changes to apply.
+//
+// Returns the calculated deltas or an error if backpropagation fails.
 func (nt *Network) calculateDelta(grad DataArray, nodes []DataArray) (deltas, error) {
 	result := make([]weight, len(nodes))
 	for i := len(nodes) - 1; i >= 0; i-- {
@@ -234,6 +258,11 @@ func (nt *Network) calculateDelta(grad DataArray, nodes []DataArray) (deltas, er
 	return deltas(result), nil
 }
 
+// backPropagate computes the gradient for the previous layer and the weight updates (deltas)
+// for the current synaptic layer. It applies the derivative of the activation function
+// and uses the optimizer to determine the magnitude of weight updates.
+//
+// Returns the new gradient, the calculated weight deltas, or an error if the process fails.
 func (nt *Network) backPropagate(grad DataArray, node DataArray, sy synaptic) (DataArray, weight, error) {
 	var wDelta [][]float64
 	newGrad := make(DataArray, len(node))
@@ -262,6 +291,8 @@ func (nt *Network) backPropagate(grad DataArray, node DataArray, sy synaptic) (D
 	return newGrad, dSet, nil
 }
 
+// updateWeight applies the computed deltas to the network's synaptic weights and biases.
+// This modifies the model in-place using simple addition of deltas to existing parameters.
 func (nt *Network) updateWeight(d deltas) {
 	for i := 0; i < len(d); i++ {
 		for j := 0; j < len(d[i].w); j++ {
@@ -276,6 +307,13 @@ func (nt *Network) updateWeight(d deltas) {
 	}
 }
 
+// Save serializes the current network configuration, including architecture, weights,
+// biases, activations, loss, and optimizer settings into a profile format, and writes it
+// to a file at the given path.
+//
+// The resulting file can later be used for restoring the model's state.
+//
+// Returns an error if any step in the marshaling or writing process fails.
 func (nt *Network) Save(path string) (err error) {
 	var sy []profile.Synaptic
 	for _, sySource := range nt.synaptics {
