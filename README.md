@@ -1,120 +1,107 @@
-# Rolade
+# Rolade 🧠
 
-**A Minimal Neural Network Toolkit in Go**
-
----
-
-## Disclaimer
-
-This project was built for fun and learning purposes. There is no guarantee regarding the validity of the methods used, and it is not actively maintained or supported. It is **not recommended** for serious or production use. Use it at your own risk.
+**Rolade** is a minimalistic neural network toolkit written in Go. It is designed to be simple, understandable, and customizable. Rolade is particularly suitable for learning purposes, small-scale experiments, and use cases where Go is preferred over Python or other machine learning languages.
 
 ---
 
-## Getting Started
+## 🚀 Features
 
-This section outlines the basic usage of the Rolade toolkit. Some parts may be incomplete and are subject to future updates.
+* Fully connected multi-layer neural network
+* Custom activation, loss, and optimizer support
+* Parallel batch training with mergeable deltas
+* Simple model save/load support
 
 ---
 
-### Defining a Network
+## 📦 Installation
 
-First, import the package:
-
-```go
-import "github.com/harungurubudi/rolade/network"
+```bash
+go get github.com/harungurubudi/rolade
 ```
 
-To create a new network, define the input and output sizes, and specify an activation function. For example, a network with 4 input features, 2 output targets, and ReLU as the activation function:
+---
+
+## 🥺 Quick Start Example
 
 ```go
-nt := network.NewNetwork(4, 2, &activation.ReLU{})
+package main
+
+import (
+	"github.com/harungurubudi/rolade/network"
+	"github.com/harungurubudi/rolade/activation"
+	"github.com/harungurubudi/rolade/loss"
+	"github.com/harungurubudi/rolade/optimizer"
+)
+
+func main() {
+	features := []network.Vector{
+		{0, 0}, {0, 1}, {1, 0}, {1, 1},
+	}
+	targets := []network.Vector{
+		{0}, {1}, {1}, {0},
+	}
+
+	samples, _ := network.NewSamples(features, targets)
+
+	props := &network.Props{
+		ErrLimit:  0.001,
+		MaxEpoch:  10000,
+		Optimizer: optimizer.NewSGDWithLearningRate(0.5),
+		Loss:      &loss.RMSE{},
+	}
+
+	net, _ := network.NewNetwork(2, 1, activation.NewSigmoid(), props)
+	net.AddHidden(2, activation.NewSigmoid())
+
+	_ = net.Train(samples)
+}
 ```
 
-You can add hidden layers using the AddHiddenLayer method. For example, to add two hidden layers of size 4 and 3 using Tanh activation:
+---
+
+## 📃 Model Persistence
 
 ```go
-nt.AddHiddenLayer(4, &activation.Tanh{})
-nt.AddHiddenLayer(3, &activation.Tanh{})
+_ = net.Save("./model")
+loadedNet, _ := network.Load("./model")
 ```
 
-### Configuring Network Properties
+---
 
-You can customize the network using the ``SetProps`` method:
+## 📄 API Structure
 
-```go
-nt.SetProps(network.Props{
-    Optimizer: &optimizer.SGD{
-        Alpha: 0.01,
-    },
-    ErrLimit: 0.005,
-    MaxEpoch: 10000,
-})
+* `Vector`: Alias for `[]float64`, used for features and targets
+* `Samples`: Slice of `Sample` (input + target pair)
+* `Network`: Main struct managing the architecture and training
+* `Props`: Contains training hyperparameters (optimizer, loss, epoch settings)
+* `Activation`, `Loss`, `Optimizer`: Interfaces for customizing behavior
+
+---
+
+## 🎓 Learning Resources
+
+Check the `/network` package for detailed GoDoc-style comments. To inspect inline:
+
+```bash
+go doc github.com/harungurubudi/rolade/network
 ```
 
-#### Available Properties
+Or view it online via [pkg.go.dev](https://pkg.go.dev/github.com/harungurubudi/rolade)
 
-| Options       | Description                                       | Type                      | Default Value           |
-|---------------|---------------------------------------------------|---------------------------|-------------------------|
-| Optimizer     | Algoritma Optimizer                               | optimizer.IOptimizer      | *optimizer.SGD          |
-| Loss          | Fungsi Loss                                       | loss.ILoss                | *loss.RMSE              |
-| ErrLimit      | Batas error yang perlu dicapai saat training      | float64                   | 0.001                   |
-| MaxEpoch      | Epoch maksimal saat training                      | int                       | 1000                    |
+---
 
-### Data Types
+## 🏆 Why Rolade?
 
-All input and output data use ``network.DataArray``, a custom type based on ``[]float64``.
+Rolade was built to revisit and understand the fundamentals of how neural networks operate under the hood, particularly in Go. While it's not optimized for large-scale production ML, it provides a transparent and hackable playground for enthusiasts and learners.
 
-```go
-singleData := network.DataArray{0, 0, 0, 1}
-```
+---
 
-### Training the Network
+## ✨ Contributions
 
-To train the network:
+PRs, issues, and discussions are welcome to help improve documentation, functionality, or compatibility with other Go ML tooling.
 
-```go
-nt.Train(inputs []DataArray, targets []DataArray) error
-```
+---
 
-- ``inputs``: Slice of input ``DataArrays``
-- ``targets``: Slice of target ``DataArrays``
+## ✉️ License
 
-### Testing the Network
-
-To test the network:
-
-```go
-nt.Test(input DataArray) (DataArray, []int, error)
-```
-
-Returns:
-
-1. The raw output (DataArray)
-2. The binary result after thresholding (values > 0.5 become 1, else 0)
-3. An error object if testing fails
-
-### Activation Functions
-
-Currently supported activation functions:
-
-- ``*activation.Sigmoid``
-- ``*activation.Tanh``
-- ``*activation.ReLU``
-
-### Optimizers
-
-Currently only one optimizer is supported:
-
-- SGD (``*optimizer.SGD``)
-  - Alpha: Learning rate
-  - Momentum: Momentum
-  - IsNesterov: Use Nesterov momentum
-  - Velocity: Velocity
-
-### Loss Functions
-
-Only one loss function is available:
-- RMSE (``*loss.RMSE``)
-
-### Examples
-A simple usage example is available in the ``example`` directory.
+MIT License
