@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	nt, err := network.NewNetwork(4, 2, &activation.Sigmoid{})
+	nt, err := network.NewNetwork(4, 2, &activation.Tanh{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,10 +33,11 @@ func main() {
 
 	nt.SetProps(network.Props{
 		Optimizer: &optimizer.SGD{
-			Alpha: 0.1,
+			Alpha: 1,
 		},
-		ErrLimit: 0.005,
-		MaxEpoch: 10000,
+		ErrLimit: 0.002,
+		MaxEpoch: 20000,
+		Patience: 10000,
 	})
 
 	features, targets, err := getData("./examples/dataset/IRIS_train.csv")

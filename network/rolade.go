@@ -51,7 +51,6 @@ type (
 		props         Props
 		synaptics     []synaptic
 		lossHistories []float64
-		updateMu      sync.Mutex
 	}
 
 	// deltas is a slice of weight updates used during backpropagation.
@@ -91,6 +90,9 @@ func (nt *Network) SetProps(props Props) {
 	}
 	if props.MaxEpoch != 0 {
 		nt.props.MaxEpoch = props.MaxEpoch
+	}
+	if props.Patience != 0 {
+		nt.props.Patience = props.Patience
 	}
 }
 
@@ -245,13 +247,25 @@ func (nt *Network) Train(samples Samples) error {
 	return nil
 }
 
-// trainSet performs one training iteration over the full dataset.
-// For each input-target pair, it executes forward propagation, calculates the error and gradient,
-// performs backpropagation to compute weight deltas, updates the weights, and accumulates
-// the mean error per sample.
+// trainEpoch performs one full training epoch over the provided dataset.
 //
-// Returns the slice of per-sample errors or an error if any part of the process fails.
+// The dataset is split into batches which are processed in parallel using goroutines.
+// Each batch goes through forward and backward propagation, computing local weight deltas and errors.
+// After all batches are processed, the resulting deltas are merged and applied to the network weights.
+// The function returns a vector of error values (one per sample) or an error if the training fails.
+//
+// Note:
+// - Parallelism is limited to a fixed number of goroutines (maxGoroutines).
+// - mergeDeltas ensures stability by averaging gradients across batches.
+//
+// Parameters:
+//   - samples: the full set of training samples for this epoch.
+//
+// Returns:
+//   - errMean: a vector of per-sample error values.
+//   - err: any error that occurred during batch training.
 func (nt *Network) trainEpoch(samples Samples) (errMean Vector, err error) {
+	// TODO: make this constants dynamic
 	const maxGoroutines = 10
 
 	batchSize := samples.Len() / maxGoroutines
@@ -261,75 +275,148 @@ func (nt *Network) trainEpoch(samples Samples) (errMean Vector, err error) {
 
 	batches := samples.Split(batchSize)
 
-	var wg sync.WaitGroup
-	errCh := make(chan error, len(batches))
-	resultCh := make(chan []float64, len(batches))
+	var (
+		wg        sync.WaitGroup
+		mutex     sync.Mutex
+		allErrs   []float64
+		allDeltas []deltas
+	)
 
 	for _, batch := range batches {
 		wg.Add(1)
-		go func(b Samples) {
+		go func(batch Samples) {
 			defer wg.Done()
-			batchErrMean, err := nt.trainBatch(b)
+
+			batchErr, batchDelta, err := nt.trainBatch(batch)
 			if err != nil {
-				errCh <- err
-				return
+				return // Could log or collect failed batch info here
 			}
-			resultCh <- batchErrMean
+
+			mutex.Lock()
+			allErrs = append(allErrs, batchErr...)
+			allDeltas = append(allDeltas, batchDelta)
+			mutex.Unlock()
 		}(batch)
 	}
 
 	wg.Wait()
-	close(errCh)
-	close(resultCh)
 
-	// Aggregate all results
-	for e := range errCh {
-		fmt.Printf("batch training error: %v\n", e)
-		return nil, e
-	}
-	for batchErr := range resultCh {
-		errMean = append(errMean, batchErr...)
-	}
+	finalDelta := mergeDeltas(allDeltas)
+	nt.updateWeight(finalDelta)
 
-	return errMean, nil
+	return allErrs, nil
 }
 
-func (nt *Network) trainBatch(batch Samples) (errMean []float64, err error) {
+// trainBatch performs training on a single batch of samples.
+//
+// For each sample in the batch, it performs:
+//   - Forward propagation to compute the output.
+//   - Error and gradient calculation at the output layer.
+//   - Backward propagation to compute weight deltas.
+//   - Error accumulation for loss reporting.
+//
+// All deltas from individual samples are collected and merged into a single delta
+// which is returned for later weight updates (outside this function).
+//
+// Parameters:
+//   - batch: a slice of samples representing a mini-batch.
+//
+// Returns:
+//   - errMean: slice of mean errors for each sample in the batch.
+//   - delta: merged weight/bias deltas to be applied later.
+//   - err: error if training fails at any point in the batch.
+func (nt *Network) trainBatch(batch Samples) (errMean []float64, delta deltas, err error) {
 	var returnTrainingError = func(index int, err error) error {
-		return fmt.Errorf("got an error while train with data %d : %v", index, err)
+		return fmt.Errorf("got an error while train with data %d: %v", index, err)
 	}
 
+	var deltasInBatch []deltas
 	for i, sample := range batch {
 		outputs, err := nt.forward(sample.Feature)
 		if err != nil {
-			return errMean, returnTrainingError(i, err)
+			return errMean, delta, returnTrainingError(i, err)
 		}
 
+		// Build node layers for backpropagation (input + hidden layers)
 		nodes := append([]Vector{sample.Feature}, outputs[:len(outputs)-1]...)
 
-		// Calculate error and gradient
+		// Compute output layer error and gradient
 		targetError := make(Vector, len(sample.Target))
 		grad := make(Vector, len(sample.Target))
-
-		for j, n := range sample.Target {
-			y := outputs[len(outputs)-1][j]
-			targetError[j] = n - y
-			grad[j] = targetError[j] * nt.synaptics[len(nt.synaptics)-1].activation.Derivate(y)
+		for j, expected := range sample.Target {
+			actual := outputs[len(outputs)-1][j]
+			targetError[j] = expected - actual
+			grad[j] = targetError[j] * nt.synaptics[len(nt.synaptics)-1].activation.Derivate(actual)
 		}
 
-		delta, err := nt.calculateDelta(grad, nodes)
+		// Calculate deltas for backpropagation
+		d, err := nt.calculateDelta(grad, nodes)
 		if err != nil {
-			return errMean, returnTrainingError(i, err)
+			return errMean, delta, returnTrainingError(i, err)
 		}
+		deltasInBatch = append(deltasInBatch, d)
 
-		nt.updateWeight(delta)
+		// Compute and accumulate per-sample error
 		tmpTErr, err := mean(targetError)
 		if err != nil {
-			return errMean, returnTrainingError(i, err)
+			return errMean, delta, returnTrainingError(i, err)
 		}
 		errMean = append(errMean, tmpTErr)
 	}
-	return errMean, nil
+
+	delta = mergeDeltas(deltasInBatch)
+	return errMean, delta, nil
+}
+
+// MergeDeltas combines multiple deltas (from different batches)
+// into a single averaged delta to be applied once.
+//
+// Each delta corresponds to a layer (len = numLayers)
+func mergeDeltas(all []deltas) deltas {
+	if len(all) == 0 {
+		return nil
+	}
+
+	// Initialize merged with deep copy of the first deltas
+	merged := make(deltas, len(all[0]))
+	for i := range all[0] {
+		merged[i] = weight{
+			weight: make([][]float64, len(all[0][i].weight)),
+			bias:   make([]float64, len(all[0][i].bias)),
+		}
+		for j := range all[0][i].weight {
+			merged[i].weight[j] = make([]float64, len(all[0][i].weight[j]))
+		}
+	}
+
+	// Accumulate
+	for _, d := range all {
+		for i, w := range d {
+			for j := range w.weight {
+				for k := range w.weight[j] {
+					merged[i].weight[j][k] += w.weight[j][k]
+				}
+			}
+			for j := range w.bias {
+				merged[i].bias[j] += w.bias[j]
+			}
+		}
+	}
+
+	// Average
+	n := float64(len(all))
+	for i := range merged {
+		for j := range merged[i].weight {
+			for k := range merged[i].weight[j] {
+				merged[i].weight[j][k] /= n
+			}
+		}
+		for j := range merged[i].bias {
+			merged[i].bias[j] /= n
+		}
+	}
+
+	return merged
 }
 
 // calculateDelta performs the full backpropagation pass through the network.

@@ -44,7 +44,7 @@ func TestNetworkTrainXOR(t *testing.T) {
 
 	net.SetProps(network.Props{
 		Loss:      &loss.RMSE{},
-		Optimizer: optimizer.NewSGD(0.5),
+		Optimizer: optimizer.NewSGD(2),
 		MaxEpoch:  10000,
 		ErrLimit:  0.001,
 		Patience:  2000,
