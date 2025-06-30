@@ -96,12 +96,6 @@ Rolade was built to revisit and understand the fundamentals of how neural networ
 
 ---
 
-## ✨ Contributions
-
-PRs, issues, and discussions are welcome to help improve documentation, functionality, or compatibility with other Go ML tooling.
-
----
-
 ## ✉️ License
 
 MIT License
