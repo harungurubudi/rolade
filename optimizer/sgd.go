@@ -16,10 +16,16 @@ type SGD struct {
 	Velocity   float64
 }
 
-func NewSGD(alpha float64) *SGD {
+func NewSGD() *SGD {
 	o := &SGD{}
 	o.initialize()
 	return o
+}
+
+func NewSGDWithLearningRate(alpha float64) *SGD {
+	sgd := NewSGD()
+	sgd.Alpha = alpha
+	return sgd
 }
 
 func (o *SGD) CalculateDelta(grad float64) float64 {

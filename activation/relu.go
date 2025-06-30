@@ -13,6 +13,10 @@ type ReLU struct{}
 
 var zero float64
 
+func NewReLU() *ReLU {
+	return &ReLU{}
+}
+
 func (s *ReLU) Activate(val float64) (result float64) {
 	return math.Max(zero, val)
 }

@@ -10,6 +10,10 @@ import (
 // which can help with optimization. Its derivative is 1 - tanh(x)^2.
 type Tanh struct{}
 
+func NewTanh() *Tanh {
+	return &Tanh{}
+}
+
 func (s *Tanh) Activate(val float64) (result float64) {
 	return math.Tanh(val)
 }

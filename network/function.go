@@ -33,7 +33,7 @@ func NewNetwork(inputSize int, outputSize int, activation activation.IActivation
 		outputSize: outputSize,
 		props: Props{
 			Loss:      &loss.RMSE{},
-			Optimizer: optimizer.NewSGD(0.01),
+			Optimizer: optimizer.NewSGDWithLearningRate(0.01),
 			ErrLimit:  0.001,
 			MaxEpoch:  1000,
 			Patience:  1000,

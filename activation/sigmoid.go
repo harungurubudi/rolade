@@ -11,6 +11,10 @@ import (
 // can suffer from vanishing gradients for very large or small inputs.
 type Sigmoid struct{}
 
+func NewSigmoid() *Sigmoid {
+	return &Sigmoid{}
+}
+
 func (s *Sigmoid) Activate(val float64) (result float64) {
 	return 1 / (1 + math.Exp(float64(-1)*val))
 }
