@@ -2,22 +2,23 @@ package preprocessor
 
 import (
 	"fmt"
+
 	"github.com/harungurubudi/rolade/network"
 )
 
-func Normalize(features []network.DataArray) (result []network.DataArray, err error) {
+func Normalize(features []network.Vector) (result []network.Vector, err error) {
 	if len(features) == 0 {
 		return result, fmt.Errorf("Feature's length is zero")
 	}
 
-	fragments := make([]network.DataArray, len(features[0]))
+	fragments := make([]network.Vector, len(features[0]))
 
 	// Shard to fragments
 	for _, item := range features {
 		if len(item) != len(fragments) {
 			return result, fmt.Errorf("Feature's size is not constant")
 		}
-	
+
 		for j, _ := range fragments {
 			fragments[j] = append(fragments[j], item[j])
 		}
@@ -33,7 +34,7 @@ func Normalize(features []network.DataArray) (result []network.DataArray, err er
 
 	// Reconstruct
 	for i, _ := range fragments[0] {
-		var tmp network.DataArray
+		var tmp network.Vector
 		for _, fragment := range fragments {
 			tmp = append(tmp, fragment[i])
 		}
@@ -43,30 +44,30 @@ func Normalize(features []network.DataArray) (result []network.DataArray, err er
 	return result, err
 }
 
-func doNormalize(pf network.DataArray) (result network.DataArray, err error) {
+func doNormalize(pf network.Vector) (result network.Vector, err error) {
 	var lowest, highest float64
 	for i, item := range pf {
 		if i == 0 {
 			lowest = item
 			highest = item
 		} else {
-			if (item < lowest) {
+			if item < lowest {
 				lowest = item
 			}
 
-			if (item > highest) {
+			if item > highest {
 				highest = item
 			}
 		}
 	}
 
-	divider := highest - lowest 
+	divider := highest - lowest
 	if divider == 0 {
 		return result, fmt.Errorf("Highest is 0, it will trigger division by zero")
 	}
 
 	for _, item := range pf {
-		result = append(result, (item - lowest) / divider)
+		result = append(result, (item-lowest)/divider)
 	}
 
 	return result, nil

@@ -11,6 +11,7 @@ type (
 		Optimizer Attr    `json:"optimizer"`
 		ErrLimit  float64 `json:"err_limit"`
 		MaxEpoch  int     `json:"max_epoch"`
+		Patience  int     `json:"patience"`
 	}
 
 	Weight struct {

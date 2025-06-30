@@ -3,8 +3,8 @@ package network
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
+	"os"
 
 	"github.com/harungurubudi/rolade/activation"
 	"github.com/harungurubudi/rolade/loss"
@@ -23,7 +23,7 @@ func NewNetwork(inputSize int, outputSize int, activation activation.IActivation
 	var synaptics []synaptic
 	sy, err := generateSynaptic(inputSize, outputSize, activation)
 	if err != nil {
-		return nt, fmt.Errorf("Got error while add layer: %v", err)
+		return nt, fmt.Errorf("got error while add layer: %v", err)
 	}
 
 	synaptics = append(synaptics, sy)
@@ -33,9 +33,10 @@ func NewNetwork(inputSize int, outputSize int, activation activation.IActivation
 		outputSize: outputSize,
 		props: Props{
 			Loss:      &loss.RMSE{},
-			Optimizer: optimizer.NewSGD(),
+			Optimizer: optimizer.NewSGD(0.01),
 			ErrLimit:  0.001,
 			MaxEpoch:  1000,
+			Patience:  1000,
 		},
 		synaptics: synaptics,
 	}
@@ -43,78 +44,88 @@ func NewNetwork(inputSize int, outputSize int, activation activation.IActivation
 	return nt, nil
 }
 
-// Load reads a serialized network profile from the specified directory and reconstructs
-// the full network configuration, including layers, weights, activation functions,
-// loss function, and optimizer.
+// Load restores a previously saved neural network model from a profile file.
 //
-// The profile file must be located at `path + "/rolade.profile"`.
+// The file must be located at the provided `path`, and is expected to be named `rolade.profile`.
+// It will unmarshal the network structure (synaptic layers, weights, activation functions),
+// along with training properties (loss function, optimizer, and training parameters).
 //
-// Returns the restored *Network or an error if deserialization or instantiation fails.
-func Load(path string) (nt *Network, err error) {
-	ntb, err := ioutil.ReadFile(path + "/rolade.profile")
+// Parameters:
+//   - path: the directory where the `rolade.profile` file is located.
+//
+// Returns:
+//   - *Network: a pointer to the loaded network instance
+//   - error: if any step in reading, unmarshaling, or reconstruction fails
+func Load(path string) (*Network, error) {
+	// Read the serialized network file
+	data, err := os.ReadFile(path + "/rolade.profile")
 	if err != nil {
-		return nil, fmt.Errorf("Got error while load model file: %v", err)
+		return nil, fmt.Errorf("error reading model file: %w", err)
 	}
 
-	var pr model.Network
-	err = json.Unmarshal(ntb, &pr)
-	if err != nil {
-		return nil, fmt.Errorf("Got error while unmarshalling model: %v", err)
+	// Unmarshal into the intermediate model.Network struct
+	var profile model.Network
+	if err := json.Unmarshal(data, &profile); err != nil {
+		return nil, fmt.Errorf("error unmarshalling model: %w", err)
 	}
 
-	var syn []synaptic
-	for _, sySource := range pr.Synaptics {
-		a, err := activation.Load(&sySource.Activation)
+	// Reconstruct synaptic layers
+	var synaptics []synaptic
+	for _, src := range profile.Synaptics {
+		act, err := activation.Load(&src.Activation)
 		if err != nil {
-			return nil, fmt.Errorf("Got error while load model: %v", err)
+			return nil, fmt.Errorf("error loading activation: %w", err)
 		}
 
-		syn = append(syn, synaptic{
-			sourceSize: sySource.SourceSize,
-			targetSize: sySource.TargetSize,
+		synaptics = append(synaptics, synaptic{
+			sourceSize: src.SourceSize,
+			targetSize: src.TargetSize,
 			weight: weight{
-				weight: sySource.Weight.Weight,
-				bias:   sySource.Weight.Bias,
+				weight: src.Weight.Weight,
+				bias:   src.Weight.Bias,
 			},
-			activation: a,
+			activation: act,
 		})
 	}
 
-	l, err := loss.Load(&pr.Props.Loss)
+	// Load training configuration
+	lossFunc, err := loss.Load(&profile.Props.Loss)
 	if err != nil {
-		return nil, fmt.Errorf("Got error while load model: %v", err)
+		return nil, fmt.Errorf("error loading loss function: %w", err)
 	}
 
-	o, err := optimizer.Generate(&pr.Props.Optimizer)
+	optimizerFunc, err := optimizer.Generate(&profile.Props.Optimizer)
 	if err != nil {
-		return nil, fmt.Errorf("Got error while load model: %v", err)
+		return nil, fmt.Errorf("error loading optimizer: %w", err)
 	}
 
+	// Return the fully reconstructed network
 	return &Network{
-		inputSize:  pr.InputSize,
-		outputSize: pr.OutputSize,
+		inputSize:  profile.InputSize,
+		outputSize: profile.OutputSize,
 		props: Props{
-			Loss:      l,
-			Optimizer: o,
-			ErrLimit:  pr.Props.ErrLimit,
-			MaxEpoch:  pr.Props.MaxEpoch,
+			Loss:      lossFunc,
+			Optimizer: optimizerFunc,
+			ErrLimit:  profile.Props.ErrLimit,
+			MaxEpoch:  profile.Props.MaxEpoch,
+			Patience:  profile.Props.Patience,
 		},
-		synaptics: syn,
+		synaptics: synaptics,
 	}, nil
 }
 
 func generateSynaptic(sourceSize int, targetSize int, activation activation.IActivation) (sy synaptic, err error) {
 	var w [][]float64
-	for i := 0; i < sourceSize; i++ {
+	for range sourceSize {
 		var tmp []float64
-		for j := 0; j < targetSize; j++ {
+		for range targetSize {
 			tmp = append(tmp, getRandomFloat(-0.5, 0.5))
 		}
 		w = append(w, tmp)
 	}
 
 	var b []float64
-	for j := 0; j < targetSize; j++ {
+	for range targetSize {
 		b = append(b, getRandomFloat(-0.5, 0.5))
 	}
 
@@ -134,9 +145,9 @@ func getRandomFloat(min, max float64) float64 {
 	return min + rand.Float64()*(max-min)
 }
 
-func mean(vals DataArray) (result float64, err error) {
+func mean(vals Vector) (result float64, err error) {
 	if len(vals) == 0 {
-		return result, fmt.Errorf("Got error while calculating mean : division by zero")
+		return result, fmt.Errorf("got error while calculating mean : division by zero")
 	}
 
 	var sum float64

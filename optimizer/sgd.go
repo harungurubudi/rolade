@@ -16,7 +16,7 @@ type SGD struct {
 	Velocity   float64
 }
 
-func NewSGD() *SGD {
+func NewSGD(alpha float64) *SGD {
 	o := &SGD{}
 	o.initialize()
 	return o
@@ -40,7 +40,7 @@ func (o *SGD) CalculateDelta(grad float64) float64 {
 
 func (o *SGD) initialize() {
 	if o.Alpha == 0 {
-		o.Alpha = float64(0.001)
+		o.Alpha = float64(0.01)
 	}
 }
 

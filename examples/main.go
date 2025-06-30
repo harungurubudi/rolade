@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	nt, err := network.NewNetwork(4, 2, &activation.Tanh{})
+	nt, err := network.NewNetwork(4, 2, &activation.Sigmoid{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,7 +44,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = nt.Train(features, targets)
+	samples, _ := network.NewSamples(features, targets)
+
+	err = nt.Train(samples)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,13 +122,13 @@ func compareLabel(input, target []int) (result bool) {
 	return result
 }
 
-func getData(filepath string) (features []network.DataArray, targets []network.DataArray, err error) {
+func getData(filepath string) (features []network.Vector, targets []network.Vector, err error) {
 	dataset, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return features, targets, fmt.Errorf("Got error while loading dataset: %v", err)
 	}
 
-	var featureData []network.DataArray
+	var featureData []network.Vector
 	r := csv.NewReader(strings.NewReader(string(dataset)))
 	for {
 		item, err := r.Read()
@@ -139,7 +141,7 @@ func getData(filepath string) (features []network.DataArray, targets []network.D
 
 		firstItem, err := strconv.ParseFloat(item[0], 64)
 		if err == nil {
-			featureData = append(featureData, network.DataArray{
+			featureData = append(featureData, network.Vector{
 				firstItem,
 				getFloat(item[1]),
 				getFloat(item[2]),
@@ -149,11 +151,11 @@ func getData(filepath string) (features []network.DataArray, targets []network.D
 
 		switch item[4] {
 		case "Iris-setosa":
-			targets = append(targets, network.DataArray{0, 0})
+			targets = append(targets, network.Vector{0, 0})
 		case "Iris-versicolor":
-			targets = append(targets, network.DataArray{0, 1})
+			targets = append(targets, network.Vector{0, 1})
 		case "Iris-virginica":
-			targets = append(targets, network.DataArray{1, 0})
+			targets = append(targets, network.Vector{1, 0})
 		}
 	}
 
